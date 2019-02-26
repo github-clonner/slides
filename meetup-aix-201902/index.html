@@ -111,7 +111,7 @@ services:
 <div class="listingblock"><div class="content"><pre class="highlight"><code data-noescape class="yaml language-yaml">web:
   build: ./web/
   labels:
-    - "traefik.frontend.rule=Host:demo.containous.cloud"</code></pre></div></div>
+    - "traefik.frontend.rule=Host:localhost"</code></pre></div></div>
 <div class="ulist"><ul><li><p>Step 2: Start the Web Server:</p></li></ul></div>
 <div class="listingblock"><div class="content"><pre class="highlight"><code data-noescape class="bash language-bash">docker-compose up -d web</code></pre></div></div></section><section id="reality_check_3" data-background-color="white" data-state="invert"><h2>Reality Check</h2><div class="paragraph"><p><a href="http://demo.containous.cloud/" target="_blank">http://demo.containous.cloud/</a></p></div>
 <div class="imageblock shadow" style=""><img src="images/after-webserver-up.png" alt="after webserver up"></div>
