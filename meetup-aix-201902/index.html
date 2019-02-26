@@ -121,7 +121,7 @@ services:
     -&gt; http://&lt;Jenkins Private IP&gt;:8080/jenkins/configuration</code></pre></div></div></li></ul></div></li><li><p><strong>Solution:</strong></p><div class="ulist"><ul><li><p>Change the frontend rule to use <a href="https://docs.traefik.io/basics/#matchers" target="_blank"><code>PathPrefix</code></a>:</p><div class="listingblock"><div class="content"><pre class="highlight"><code data-noescape class="yaml language-yaml">- "traefik.frontend.rule=Host:demo.containous.cloud;PathPrefix:/jenkins"</code></pre></div></div></li></ul></div></li></ul></div></section><section id="challenge_3_3"><h2>Challenge 3/3</h2><div class="ulist"><ul><li><p><strong>Problem:</strong></p><div class="ulist"><ul><li><p>How to tell Jenkins to accept requests under <code>/jenkins</code>?</p></li><li><p><strong>Solution:</strong></p></li><li><p>Use the Jenkins flag <code>--prefix=/jenkins</code> with the variable <code>JENKINS_OPTS</code>:</p><div class="listingblock"><div class="content"><pre class="highlight"><code data-noescape class="yaml language-yaml">environment:
   - JENKINS_OPTS=--prefix=/jenkins</code></pre></div></div></li></ul></div></li></ul></div></section><section id="jenkins_setup"><h2>Jenkins Setup</h2><div class="ulist"><ul><li><p>Step 1: Edit Compose file:</p></li></ul></div>
 <div class="listingblock"><div class="content"><pre class="highlight"><code data-noescape class="yaml language-yaml">jenkins:
-  image: jenkins/jenkins:2.150.2-alpine
+  image: jenkins/jenkins:2.150.3-alpine
   expose:
     - 8080
     - 50000
