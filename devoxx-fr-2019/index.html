@@ -167,10 +167,23 @@ helm ls</code></pre></div></div></li></ul></div></section><section id="reality_c
 <div class="listingblock"><div class="content"><pre class="highlight"><code data-noescape class="yaml language-yaml"># Allow creating the needed Role and Service Account
 rbac:
   enabled: true</code></pre></div></div>
-<div class="ulist"><ul><li><p>Step 2: (Re) Install Traefik</p></li></ul></div>
+<div class="ulist"><ul><li><p>Step 2: Install Traefik in a specific namespace</p></li></ul></div>
 <div class="listingblock"><div class="content"><pre class="highlight"><code data-noescape class="bash language-bash">helm delete --purge traefik-devoxx
-helm install stable/traefik --name traefik-devoxx --namespace devoxx -f ./values.yml
-helm ls</code></pre></div></div></section><section id="the_web_server_setup_2" data-transition-speed="fast"><h2>The Web Server Setup</h2><div class="ulist"><ul><li><p>Step 1: Declare the Ingress Rule</p></li></ul></div>
+helm install stable/traefik --name traefik-devoxx --namespace devoxx -f ./values.yml</code></pre></div></div></section><section id="the_web_server_setup_2" data-transition-speed="fast"><h2>The Web Server Setup</h2><div class="ulist"><ul><li><p>Step 1: Declare a Headless Service</p></li></ul></div>
+<div class="listingblock"><div class="content"><pre class="highlight"><code data-noescape class="yaml language-yaml">---
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-service
+  namespace: devoxx
+  labels:
+    guilde: web
+spec:
+  ports:
+  - port: 80
+    name: fake-http
+  type: ExternalName
+  externalName: redirect.containous.cloud</code></pre></div></div></section><section data-transition-speed="fast"><div class="ulist"><ul><li><p>Step 2: Declare the Ingress Rule</p></li></ul></div>
 <div class="listingblock"><div class="content"><pre class="highlight"><code data-noescape class="yaml language-yaml">---
 apiVersion: extensions/v1beta1
 kind: Ingress
@@ -191,21 +204,7 @@ spec:
       - path: /foobar
         backend:
           serviceName: web-service
-          servicePort: fake-http</code></pre></div></div></section><section data-transition-speed="fast"><div class="ulist"><ul><li><p>Step 2: Declare a Headless Service</p></li></ul></div>
-<div class="listingblock"><div class="content"><pre class="highlight"><code data-noescape class="yaml language-yaml">---
-apiVersion: v1
-kind: Service
-metadata:
-  name: web-service
-  namespace: devoxx
-  labels:
-    guilde: web
-spec:
-  ports:
-  - port: 80
-    name: fake-http
-  type: ExternalName
-  externalName: redirect.containous.cloud</code></pre></div></div>
+          servicePort: fake-http</code></pre></div></div>
 <div class="ulist"><ul><li><p>Step 3: Apply the configuration</p></li></ul></div>
 <div class="listingblock"><div class="content"><pre class="highlight"><code data-noescape class="bash language-bash">kubectl apply -f ./web/svc-ingress.yml</code></pre></div></div></section><section id="reality_check_10" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Reality Check</h2><div class="paragraph"><p><a href="http://demo.containous.cloud/" target="_blank">http://demo.containous.cloud/</a></p></div>
 <div class="imageblock shadow" style=""><img src="images/after-webserver-up.png" alt="after webserver up"></div>
