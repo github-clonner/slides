@@ -75,7 +75,7 @@ services:
 <pre class="highlight listingblock"><code data-noescape class="bash language-bash">docker-compose up -d web</code></pre></section><section id="reality_check_3" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Reality Check</h2><div class="paragraph"><p><a href="http://lab01.demo.containous.cloud/" target="_blank">http://lab01.demo.containous.cloud/</a></p></div>
 <div class="imageblock shadow" style=""><img src="images/after-webserver-up.png" alt="after webserver up"></div>
 <div class="paragraph"><p>It&#8217;s good: we have a web page!</p></div></section></section>
-<section><section id="adding_a_ci_server" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Adding a CI Server</h2></section><section id="goal_2" data-transition-speed="fast"><h2>Goal</h2><div class="ulist"><ul><li><p>We want to host our own automation system for Continuous Integration</p><div class="ulist"><ul><li><p>Let&#8217;s use <a href="https://jenkins.io" target="_blank">Jenkins</a></p></li></ul></div></li></ul></div></section><section id="challenge_13" data-transition-speed="fast"><h2>Challenge 1/3</h2><div class="ulist"><ul><li><p><strong>Problem:</strong></p><div class="ulist"><ul><li><p>Jenkins exposes 2 ports: <code>8080</code> and <code>50000</code>. How to let Traefik know to only use <code>8080</code>?</p></li></ul></div></li><li><p><strong>Solution:</strong></p><div class="ulist"><ul><li><p>Select the port with the label <a href="https://docs.traefik.io/configuration/backends/docker/#on-containers" target="_blank"><code>traefik.port</code></a>:</p><pre class="highlight listingblock"><code data-noescape class="yaml language-yaml">- "traefik.port=8080"</code></pre></li></ul></div></li></ul></div></section><section id="challenge_23" data-transition-speed="fast"><h2>Challenge 2/3</h2><div class="ulist"><ul><li><p><strong>Problem:</strong></p><div class="ulist"><ul><li><p>How to let Traefik know when to send requests to the Jenkins backend instead of the webserver?</p><pre class="highlight listingblock"><code data-noescape>http://demo.containous.cloud/jenkins/configuration
+<section><section id="adding_a_ci_server" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Adding a CI Server</h2></section><section id="goal_2" data-transition-speed="fast"><h2>Goal</h2><div class="ulist"><ul><li><p>We want to host our own automation system for Continuous Integration</p><div class="ulist"><ul><li><p>Let&#8217;s use <a href="https://jenkins.io" target="_blank">Jenkins</a></p></li></ul></div></li></ul></div></section><section id="challenge_13" data-transition-speed="fast"><h2>Challenge 1/3</h2><div class="ulist"><ul><li><p><strong>Problem:</strong></p><div class="ulist"><ul><li><p>Jenkins exposes 2 ports: <code>8080</code> and <code>50000</code>. How to let Traefik know to only use <code>8080</code>?</p></li></ul></div></li><li><p><strong>Solution:</strong></p><div class="ulist"><ul><li><p>Select the port with the label <a href="https://docs.traefik.io/configuration/backends/docker/#on-containers" target="_blank"><code>traefik.port</code></a>:</p><pre class="highlight listingblock"><code data-noescape class="yaml language-yaml">- "traefik.port=8080"</code></pre></li></ul></div></li></ul></div></section><section id="challenge_23" data-transition-speed="fast"><h2>Challenge 2/3</h2><div class="ulist"><ul><li><p><strong>Problem:</strong></p><div class="ulist"><ul><li><p>How to let Traefik know when to send requests to the Jenkins backend instead of the webserver?</p><pre class="highlight listingblock"><code data-noescape class="bash language-bash">http://lab01.demo.containous.cloud/jenkins/configuration
   -&gt; Traefik
     -&gt; http://&lt;Jenkins Private IP&gt;:8080/jenkins/configuration</code></pre></li></ul></div></li><li><p><strong>Solution:</strong></p><div class="ulist"><ul><li><p>Change the frontend rule to use <a href="https://docs.traefik.io/basics/#matchers" target="_blank"><code>PathPrefix</code></a>:</p><pre class="highlight listingblock"><code data-noescape class="yaml language-yaml">- "traefik.frontend.rule=PathPrefix:/jenkins"</code></pre></li></ul></div></li></ul></div></section><section id="challenge_33" data-transition-speed="fast"><h2>Challenge 3/3</h2><div class="ulist"><ul><li><p><strong>Problem:</strong></p><div class="ulist"><ul><li><p>How to tell Jenkins to accept requests under <code>/jenkins</code>?</p></li><li><p><strong>Solution:</strong></p></li><li><p>Use the Jenkins flag <code>--prefix=/jenkins</code> with the variable <code>JENKINS_OPTS</code>:</p><pre class="highlight listingblock"><code data-noescape class="yaml language-yaml">environment:
   - JENKINS_OPTS=--prefix=/jenkins</code></pre></li></ul></div></li></ul></div></section><section id="jenkins_setup" data-transition-speed="fast"><h2>Jenkins Setup</h2><div class="ulist"><ul><li><p>Step 1: Edit Compose file:</p></li></ul></div>
@@ -190,10 +190,15 @@ metadata:
     guilde: web
 spec:
   ports:
+  # Define the port to contact on the external Host
+  # Here contact Traefik defined in lab1
   - port: 80
-    name: fake-http
+    name: traefik-http
+  # Indicate to Kubernetes that the service will redirect
+  # to a backend which is not managed in the Kubernets network
   type: ExternalName
-  externalName: redirect.containous.cloud</code></pre></section><section data-transition-speed="fast"><div class="ulist"><ul><li><p>Step 2: Declare the Ingress Rule</p></li></ul></div>
+  # IP of the VM in the lab1
+  externalName: 18.196.121.238</code></pre></section><section data-transition-speed="fast"><div class="ulist"><ul><li><p>Step 2: Declare the Ingress Rule</p></li></ul></div>
 <pre class="highlight listingblock"><code data-noescape class="yaml language-yaml">---
 apiVersion: extensions/v1beta1
 kind: Ingress
@@ -204,17 +209,19 @@ metadata:
     guilde: web
   annotations:
     kubernetes.io/ingress.class: 'traefik'
+    # Indicate to Traefik to not set the original Host
+    # as a Host Header to allow the redirection
     traefik.frontend.passHostHeader: "false"
     traefik.frontend.rule.type: PathPrefix
 spec:
   rules:
-  - host: lab.nicolas.containous.cloud
+  - host:
     http:
       paths:
-      - path: /foobar
+      - path: /
         backend:
           serviceName: web-service
-          servicePort: fake-http</code></pre>
+          servicePort: traefik-http</code></pre>
 <div class="ulist"><ul><li><p>Step 3: Apply the configuration</p></li></ul></div>
 <pre class="highlight listingblock"><code data-noescape class="bash language-bash">kubectl apply -f ./web/svc-ingress.yml</code></pre></section><section id="reality_check_10" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Reality Check</h2><div class="paragraph"><p><a href="http://lab01.demo.containous.cloud/" target="_blank">http://lab01.demo.containous.cloud/</a></p></div>
 <div class="imageblock shadow" style=""><img src="images/after-webserver-up.png" alt="after webserver up"></div>
