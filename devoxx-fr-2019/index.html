@@ -15,7 +15,7 @@ link.type = 'text/css';
 link.href = window.location.search.match( /print-pdf/gi ) ? "./reveal.js/css/print/pdf.css" : "./reveal.js/css/print/paper.css";
 document.getElementsByTagName( 'head' )[0].appendChild( link );</script><!--[if lt IE 9]><script src="./reveal.js/lib/js/html5shiv.js"></script><![endif]--></head><body><div class="reveal"><div class="slides"><section id="le_seigneur_des_conteneurs" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Le seigneur des conteneurs</h2><div class="paragraph"><p>Un atelier de migration vers Kubernetes et Traefik</p></div>
 <div class="imageblock" style=""><img src="images/gandalf-gopher.png" alt="Gandalf Gopher" height="300"></div>
-<div class="imageblock" style=""><img src="images/qrcode.png" alt="QRCode to this presentation" height="100"></div>
+<div class="imageblock" style=""><img src="images/qrcode.png" alt="QRCode to this presentation" height="150"></div>
 <div class="paragraph small"><small><a href="https://containous.github.io/slides/devoxx-fr-2019">https://containous.github.io/slides/devoxx-fr-2019</a></small></div></section>
 <section id="how_to_use_these_slides" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>How to use these slides?</h2><div class="ulist"><ul><li><p><strong>Browse the slides:</strong> Use the arrows</p><div class="ulist"><ul><li><p>Change chapter: Left/Right arrows</p></li><li><p>Next or previous slide: Top and bottom arrows</p></li></ul></div></li><li><p><strong>Overview of the slides:</strong> keyboard&#8217;s shortcut "<kbd>o</kbd>"</p></li><li><p><strong>Speaker mode (and notes):</strong> keyboard&#8217;s shortcut "<kbd>s</kbd>"</p></li></ul></div></section>
 <section id="whoami_12" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Whoami 1/2</h2><div class="paragraph"><p>Nicolas Mengin</p></div>
@@ -52,21 +52,12 @@ document.getElementsByTagName( 'head' )[0].appendChild( link );</script><!--[if 
 
 services:
   edge:
-&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD
     image: traefik:1.7.10
     command:
-      - "--docker"
+      - "--docker.domain=lab01.demo.containous.cloud"
     ports:
       - "80:80"
       - "443:443"
-=======
-    image: traefik:1.7.9
-    command:
-      - "--docker" # Tells Traefik to listen to docker
-    ports:
-      - "80:80"     # The HTTP port
-      - "443:443"   # The HTTPS port
-&gt;&gt;&gt;&gt;&gt;&gt;&gt; Init BBL Decathlon
     volumes:
       # To communicate with the Docker Engine
       - /var/run/docker.sock:/var/run/docker.sock</code></pre></li><li><p>Step 2: Start the stack</p><pre class="highlight listingblock"><code data-noescape class="bash language-bash">$ docker-compose up -d</code></pre></li></ul></div></section><section id="reality_check_2" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Reality Check</h2><div class="paragraph"><p><a href="http://lab01.demo.containous.cloud/" target="_blank">http://lab01.demo.containous.cloud/</a></p></div>
@@ -76,40 +67,28 @@ services:
 <pre class="highlight listingblock"><code data-noescape class="bash language-bash">http://lab01.demo.containous.cloud/index.html
   -&gt; Traefik
     -&gt; http://&lt;Webserver Private IP&gt;/index.html</code></pre></section><section id="the_web_server_setup" data-transition-speed="fast"><h2>The Web Server Setup</h2><div class="ulist"><ul><li><p>Step 1: web server in Compose. Check the <code>labels</code>:</p></li></ul></div>
-<pre class="highlight listingblock"><code data-noescape class="yaml language-yaml">  web:
-    build: ./web/
-    labels:
-&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD
-      - "traefik.frontend.rule=Path:/"
-=======
-      - "traefik.frontend.rule=Host:demo.containous.cloud"
-&gt;&gt;&gt;&gt;&gt;&gt;&gt; Init BBL Decathlon</code></pre>
+<pre class="highlight listingblock"><code data-noescape class="yaml language-yaml">web:
+  build: ./web/
+  labels:
+    - "traefik.frontend.rule=Path:/"</code></pre>
 <div class="ulist"><ul><li><p>Step 2: Start the Web Server:</p></li></ul></div>
 <pre class="highlight listingblock"><code data-noescape class="bash language-bash">docker-compose up -d web</code></pre></section><section id="reality_check_3" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Reality Check</h2><div class="paragraph"><p><a href="http://lab01.demo.containous.cloud/" target="_blank">http://lab01.demo.containous.cloud/</a></p></div>
 <div class="imageblock shadow" style=""><img src="images/after-webserver-up.png" alt="after webserver up"></div>
 <div class="paragraph"><p>It&#8217;s good: we have a web page!</p></div></section></section>
 <section><section id="adding_a_ci_server" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Adding a CI Server</h2></section><section id="goal_2" data-transition-speed="fast"><h2>Goal</h2><div class="ulist"><ul><li><p>We want to host our own automation system for Continuous Integration</p><div class="ulist"><ul><li><p>Let&#8217;s use <a href="https://jenkins.io" target="_blank">Jenkins</a></p></li></ul></div></li></ul></div></section><section id="challenge_13" data-transition-speed="fast"><h2>Challenge 1/3</h2><div class="ulist"><ul><li><p><strong>Problem:</strong></p><div class="ulist"><ul><li><p>Jenkins exposes 2 ports: <code>8080</code> and <code>50000</code>. How to let Traefik know to only use <code>8080</code>?</p></li></ul></div></li><li><p><strong>Solution:</strong></p><div class="ulist"><ul><li><p>Select the port with the label <a href="https://docs.traefik.io/configuration/backends/docker/#on-containers" target="_blank"><code>traefik.port</code></a>:</p><pre class="highlight listingblock"><code data-noescape class="yaml language-yaml">- "traefik.port=8080"</code></pre></li></ul></div></li></ul></div></section><section id="challenge_23" data-transition-speed="fast"><h2>Challenge 2/3</h2><div class="ulist"><ul><li><p><strong>Problem:</strong></p><div class="ulist"><ul><li><p>How to let Traefik know when to send requests to the Jenkins backend instead of the webserver?</p><pre class="highlight listingblock"><code data-noescape>http://demo.containous.cloud/jenkins/configuration
   -&gt; Traefik
-    -&gt; http://&lt;Jenkins Private IP&gt;:8080/jenkins/configuration</code></pre></li></ul></div></li><li><p><strong>Solution:</strong></p><div class="ulist"><ul><li><p>Change the frontend rule to use <a href="https://docs.traefik.io/basics/#matchers" target="_blank"><code>PathPrefix</code></a>:</p><pre class="highlight listingblock"><code data-noescape class="yaml language-yaml">&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD
-      - "traefik.frontend.rule=PathPrefix:/jenkins"
-=======
-      - "traefik.frontend.rule=Host:demo.containous.cloud;PathPrefix:/jenkins"
-&gt;&gt;&gt;&gt;&gt;&gt;&gt; Init BBL Decathlon</code></pre></li></ul></div></li></ul></div></section><section id="challenge_33" data-transition-speed="fast"><h2>Challenge 3/3</h2><div class="ulist"><ul><li><p><strong>Problem:</strong></p><div class="ulist"><ul><li><p>How to tell Jenkins to accept requests under <code>/jenkins</code>?</p></li><li><p><strong>Solution:</strong></p></li><li><p>Use the Jenkins flag <code>--prefix=/jenkins</code> with the variable <code>JENKINS_OPTS</code>:</p><pre class="highlight listingblock"><code data-noescape class="yaml language-yaml">environment:
+    -&gt; http://&lt;Jenkins Private IP&gt;:8080/jenkins/configuration</code></pre></li></ul></div></li><li><p><strong>Solution:</strong></p><div class="ulist"><ul><li><p>Change the frontend rule to use <a href="https://docs.traefik.io/basics/#matchers" target="_blank"><code>PathPrefix</code></a>:</p><pre class="highlight listingblock"><code data-noescape class="yaml language-yaml">- "traefik.frontend.rule=PathPrefix:/jenkins"</code></pre></li></ul></div></li></ul></div></section><section id="challenge_33" data-transition-speed="fast"><h2>Challenge 3/3</h2><div class="ulist"><ul><li><p><strong>Problem:</strong></p><div class="ulist"><ul><li><p>How to tell Jenkins to accept requests under <code>/jenkins</code>?</p></li><li><p><strong>Solution:</strong></p></li><li><p>Use the Jenkins flag <code>--prefix=/jenkins</code> with the variable <code>JENKINS_OPTS</code>:</p><pre class="highlight listingblock"><code data-noescape class="yaml language-yaml">environment:
   - JENKINS_OPTS=--prefix=/jenkins</code></pre></li></ul></div></li></ul></div></section><section id="jenkins_setup" data-transition-speed="fast"><h2>Jenkins Setup</h2><div class="ulist"><ul><li><p>Step 1: Edit Compose file:</p></li></ul></div>
-<pre class="highlight listingblock"><code data-noescape class="yaml language-yaml">  jenkins:
-    image: jenkins/jenkins:2.150.3-alpine
-    expose:
-      - 8080
-      - 50000
-    environment:
-      - JENKINS_OPTS=--prefix=/jenkins
-    labels:
-      - "traefik.port=8080"
-&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD
-      - "traefik.frontend.rule=PathPrefix:/jenkins"
-=======
-      - "traefik.frontend.rule=Host:demo.containous.cloud;PathPrefix:/jenkins"
-&gt;&gt;&gt;&gt;&gt;&gt;&gt; Init BBL Decathlon</code></pre>
+<pre class="highlight listingblock"><code data-noescape class="yaml language-yaml">jenkins:
+  image: jenkins/jenkins:2.150.3-alpine
+  expose:
+    - 8080
+    - 50000
+  environment:
+    - JENKINS_OPTS=--prefix=/jenkins
+  labels:
+    - "traefik.port=8080"
+    - "traefik.frontend.rule=PathPrefix:/jenkins"</code></pre>
 <div class="ulist"><ul><li><p>Step 2: update the service</p></li></ul></div>
 <pre class="highlight listingblock"><code data-noescape class="bash language-bash">docker-compose up -d jenkins</code></pre></section><section id="reality_check_4" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Reality Check</h2><div class="paragraph"><p>Click on the "Jenkins" link:</p></div>
 <div class="paragraph"><p><a href="http://lab01.demo.containous.cloud/jenkins" target="_blank">http://lab01.demo.containous.cloud/jenkins</a></p></div>
@@ -120,39 +99,27 @@ services:
   -&gt; Traefik
     -&gt; http://&lt;Gitea private IP&gt;:3000/index.html</code></pre>
 <div class="ulist"><ul><li><p><strong>Solution:</strong></p><div class="ulist"><ul><li><p>Use the Traefik&#8217;s Frontend Rule <a href="https://docs.traefik.io/basics/#matchers" target="_blank"><code>PathPrefixStrip</code></a></p></li></ul></div></li></ul></div>
-<pre class="highlight listingblock"><code data-noescape class="yaml language-yaml">&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD
-      - "traefik.frontend.rule=PathPrefixStrip:/gitserver"
-=======
-      - "traefik.frontend.rule=Host:demo.containous.cloud;PathPrefixStrip:/gitserver"
-&gt;&gt;&gt;&gt;&gt;&gt;&gt; Init BBL Decathlon</code></pre></section><section id="gitea_setup" data-transition-speed="fast"><h2>Gitea Setup</h2><div class="ulist"><ul><li><p>Step 1: Edit Compose file:</p></li></ul></div>
-<pre class="highlight listingblock"><code data-noescape class="yaml language-yaml">  gitserver:
-    image: gitea/gitea:latest
-    expose:
-      - "3000"
-      - "22"
-    environment:
-      - ROOT_URL=/gitserver
-    labels:
-      - "traefik.port=3000"
-&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD
-      - "traefik.frontend.rule=PathPrefixStrip:/gitserver"
-=======
-      - "traefik.frontend.rule=Host:demo.containous.cloud;PathPrefixStrip:/gitserver"
-&gt;&gt;&gt;&gt;&gt;&gt;&gt; Init BBL Decathlon</code></pre>
+<pre class="highlight listingblock"><code data-noescape class="yaml language-yaml">- "traefik.frontend.rule=PathPrefixStrip:/gitserver"</code></pre></section><section id="gitea_setup" data-transition-speed="fast"><h2>Gitea Setup</h2><div class="ulist"><ul><li><p>Step 1: Edit Compose file:</p></li></ul></div>
+<pre class="highlight listingblock"><code data-noescape class="yaml language-yaml">gitserver:
+  image: gitea/gitea:latest
+  expose:
+    - "3000"
+    - "22"
+  environment:
+    - ROOT_URL=/gitserver
+  labels:
+    - "traefik.port=3000"
+    - "traefik.frontend.rule=PathPrefixStrip:/gitserver"</code></pre>
 <div class="ulist"><ul><li><p>Step 2: create the service</p></li></ul></div>
 <pre class="highlight listingblock"><code data-noescape class="bash language-bash">docker-compose up -d gitserver</code></pre></section><section id="reality_check_5" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Reality Check</h2><div class="paragraph"><p>Try the "Gitea Git server" link:</p></div>
 <div class="paragraph"><p><a href="http://lab01.demo.containous.cloud/gitserver" target="_blank">http://lab01.demo.containous.cloud/gitserver</a></p></div>
 <div class="imageblock shadow" style=""><img src="images/after-gitea-up.png" alt="after gitea up" width="500"></div>
 <div class="paragraph"><p>It&#8217;s good: we can setup Gitea!</p></div></section></section>
 <section><section id="a_web_cli" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>A Web CLI</h2></section><section id="goal_4" data-transition-speed="fast"><h2>Goal</h2><div class="ulist"><ul><li><p>We want to host our own Web Command Line</p><div class="ulist"><ul><li><p>Let&#8217;s use <a href="https://github.com/tsl0922/ttyd" target="_blank">TTYD, Share your terminal over the web.</a></p></li></ul></div></li></ul></div></section><section id="challenge_2" data-transition-speed="fast"><h2>Challenge</h2><div class="ulist"><ul><li><p><strong>Problem:</strong> TTYD requires Websockets</p></li><li><p><strong>Solution:</strong></p><div class="ulist"><ul><li><p>It&#8217;s not even a problem with Traefik!</p></li></ul></div></li></ul></div></section><section id="easy_peasy" data-transition-speed="fast"><h2>Easy Peasy!</h2><div class="ulist"><ul><li><p>Step 1: Edit Compose file:</p></li></ul></div>
-<pre class="highlight listingblock"><code data-noescape class="yaml language-yaml">  ttyd:
-    image: tsl0922/ttyd
-    labels:
-&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD
-      - "traefik.frontend.rule=PathPrefixStrip:/ttyd"
-=======
-      - "traefik.frontend.rule=Host:demo.containous.cloud;PathPrefixStrip:/ttyd"
-&gt;&gt;&gt;&gt;&gt;&gt;&gt; Init BBL Decathlon</code></pre>
+<pre class="highlight listingblock"><code data-noescape class="yaml language-yaml">ttyd:
+  image: tsl0922/ttyd
+  labels:
+    - "traefik.frontend.rule=PathPrefixStrip:/ttyd"</code></pre>
 <div class="ulist"><ul><li><p>Step 2: create the service</p></li></ul></div>
 <pre class="highlight listingblock"><code data-noescape class="bash language-bash">docker-compose up -d ttyd</code></pre></section><section id="reality_check_6" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Reality Check</h2><div class="paragraph"><p>Try the "TTYD Web Command Line" link:</p></div>
 <div class="paragraph"><p><a href="http://lab01.demo.containous.cloud/ttyd" target="_blank">http://lab01.demo.containous.cloud/ttyd</a></p></div>
@@ -176,7 +143,7 @@ services:
       - "--acme.storage=acme.json"        # Stores certificates in the file "acme.storage".
       - "--acme.tlsChallenge=true"        # Uses TLS Challenge.
       - "--acme.onHostRule=true"          # Get cert's domain names from frontend rules.
-      - "--docker.domain=demo.containous.cloud"
+      - "--docker.domain=lab01.demo.containous.cloud"
     labels:
       - "traefik.enable=false"</code></pre></li><li><p>Step 2: Update the <code>edge</code> service</p><pre class="highlight listingblock"><code data-noescape class="bash language-bash">docker-compose up -d edge</code></pre></li></ul></div></section><section id="reality_check_7" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Reality Check</h2><div class="ulist"><ul><li><p>Wait a few seconds (time to get the certificate from Let&#8217;s Encrypt) and reload the main page:</p></li></ul></div>
 <div class="paragraph"><p><a href="https://lab01.demo.containous.cloud" target="_blank">https://lab01.demo.containous.cloud</a></p></div>
