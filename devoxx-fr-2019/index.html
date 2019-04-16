@@ -75,7 +75,9 @@ services:
   -&gt; Traefik
     -&gt; http://&lt;Webserver Private IP&gt;/index.html</code></pre></section><section id="the_web_server_setup" data-transition-speed="fast"><h2>The Web Server Setup</h2><div class="ulist"><ul><li><p>Step 1: web server in Compose. Check the <code>labels</code>:</p></li></ul></div>
 <pre class="highlight listingblock"><code data-noescape class="yaml language-yaml">web:
-  build: ./web/
+  build:
+    context: ./web/
+    dockerfile: Dockerfile-v1
   labels:
     - "traefik.frontend.rule=Path:/"</code></pre>
 <div class="ulist"><ul><li><p>Step 2: Start the Web Server:</p></li></ul></div>
