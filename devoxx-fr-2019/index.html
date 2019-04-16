@@ -127,30 +127,17 @@ services:
 <pre class="highlight listingblock"><code data-noescape class="bash language-bash">docker-compose up -d ttyd</code></pre></section><section id="reality_check_6" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Reality Check</h2><div class="paragraph"><p><a href="http://lab01.ddu-workshops-1.com/ttyd" target="_blank">http://lab01.ddu-workshops-1.com/ttyd</a></p></div>
 <div class="imageblock shadow" style=""><img src="images/after-ttyd-up.png" alt="after ttyd up" width="500"></div>
 <div class="paragraph"><p>It&#8217;s good: we have our own "web CLI" in a web browser!</p></div></section></section>
-<section><section id="lab_1_6" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Lab 1</h2><div class="ulist"><ul><li><p>Traefik</p></li><li><p>Web Server</p></li><li><p>CI Server</p></li><li><p>SCM: A Gitea Git Server</p></li><li><p>Web CLI</p></li><li><p><strong>SSL for everyone</strong></p></li></ul></div></section><section id="goals" data-transition-speed="fast"><h2>Goals</h2><div class="ulist"><ul><li><p>Use HTTPS instead of HTTP</p></li><li><p>Do NOT care about certificates and renewal</p></li><li><p>Use a TOML configuration file</p></li><li><p>Redirect any incoming HTTP request to HTTPS</p></li></ul></div>
-<pre class="highlight listingblock"><code data-noescape class="bash language-bash">http://lab01.ddu-workshops-1.com/
-  -&gt; https://lab01.ddu-workshops-1.com/</code></pre>
-<aside class="notes"><div class="ulist"><ul><li><p>explain TOML allow serialize complexconfiguration</p></li></ul></div></aside></section><section id="lets_encrypt" data-transition-speed="fast"><div class="imageblock" style=""><img src="images/letsencrypt-logo-horizontal.svg" alt="letsencrypt logo horizontal" height="100"></div>
+<section><section id="lab_1_6" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Lab 1</h2><div class="ulist"><ul><li><p>Traefik</p></li><li><p>Web Server</p></li><li><p>CI Server</p></li><li><p>SCM: A Gitea Git Server</p></li><li><p>Web CLI</p></li><li><p><strong>SSL for everyone</strong></p></li></ul></div></section><section id="goals" data-transition-speed="fast"><h2>Goals</h2><div class="ulist"><ul><li><p>Use HTTPS instead of HTTP</p></li><li><p>Do NOT care about certificates and renewal</p></li><li><p>Use a TOML configuration file</p></li></ul></div>
+<aside class="notes"><div class="ulist"><ul><li><p>explain TOML allow serialize complex configuration</p></li></ul></div></aside></section><section id="lets_encrypt" data-transition-speed="fast"><div class="imageblock" style=""><img src="images/letsencrypt-logo-horizontal.svg" alt="letsencrypt logo horizontal" height="100"></div>
 <div class="quoteblock"><blockquote><div class="paragraph"><p><a href="https://letsencrypt.org/" target="_blank">Let’s Encrypt</a> is a free, automated, and open Certificate Authority.</p></div></blockquote></div>
-<div class="paragraph"><p>It uses the "ACME" protocol to verify that you control a given domain name and to issue a certificate.</p></div></section><section id="problem_14" data-transition-speed="fast"><h2>Problem 1/4</h2><div class="ulist"><ul><li><p><strong>Problem:</strong> How to tell Traefik to listen on port <code>443</code> for HTTPS requests?</p></li><li><p><strong>Solution:</strong></p><div class="ulist"><ul><li><p>Create a new <a href="https://docs.traefik.io/basics/#entrypoints">entrypoint</a></p></li><li><p>Add it to the default entrypoints list</p></li></ul></div></li></ul></div>
+<div class="paragraph"><p>It uses the "ACME" protocol to verify that you control a given domain name and to issue a certificate.</p></div></section><section id="problem_13" data-transition-speed="fast"><h2>Problem 1/3</h2><div class="ulist"><ul><li><p><strong>Problem:</strong> How to tell Traefik to listen on port <code>443</code> for HTTPS requests?</p></li><li><p><strong>Solution:</strong></p><div class="ulist"><ul><li><p>Create a new <a href="https://docs.traefik.io/basics/#entrypoints">entrypoint</a></p></li><li><p>Add it to the default entrypoints list</p></li></ul></div></li></ul></div>
 <pre class="highlight listingblock"><code data-noescape class="toml language-toml"># TOML sample
 defaultEntryPoints = ["http", "https"]
 
 [entryPoints]
   [entryPoints.https]
   address = ":443"
-    [entryPoints.https.tls]</code></pre></section><section id="problem_24" data-transition-speed="fast"><h2>Problem 2/4</h2><div class="ulist"><ul><li><p><strong>Problem:</strong> How to tell Traefik to redirect request from <code>http</code> to <code>https</code>?</p></li><li><p><strong>Solution:</strong> Configure the new <a href="https://docs.traefik.io/basics/#entrypoints">entrypoint</a> <code>http</code>.</p></li></ul></div>
-<pre class="highlight listingblock"><code data-noescape class="toml language-toml"># TOML sample
-defaultEntryPoints = ["http", "https"]
-
-[entryPoints]
-  [entryPoints.https]
-  address = ":443"
-    [entryPoints.https.tls]
-  [entryPoints.http]
-  address = ":80"
-    [entryPoints.http.redirect]
-    entryPoint = "https"</code></pre></section><section id="problem_34" data-transition-speed="fast"><h2>Problem 3/4</h2><div class="ulist"><ul><li><p><strong>Problem:</strong> How to tell Traefik to use Let&#8217;s Encrypt for HTTPS?</p></li><li><p><strong>Solution:</strong></p><div class="ulist"><ul><li><p>Configure the <a href="https://docs.traefik.io/configuration/acme/">ACME/Let&#8217;s Encrypt provider</a>:</p></li></ul></div></li></ul></div>
+    [entryPoints.https.tls]</code></pre></section><section id="problem_23" data-transition-speed="fast"><h2>Problem 2/3</h2><div class="ulist"><ul><li><p><strong>Problem:</strong> How to tell Traefik to use Let&#8217;s Encrypt for HTTPS?</p></li><li><p><strong>Solution:</strong></p><div class="ulist"><ul><li><p>Configure the <a href="https://docs.traefik.io/configuration/acme/">ACME/Let&#8217;s Encrypt provider</a>:</p></li></ul></div></li></ul></div>
 <pre class="highlight listingblock"><code data-noescape class="toml language-toml"># TOML sample
 [acme]
 email = "noreply@lab.org"
@@ -159,7 +146,7 @@ entryPoint = "https"
 [acme.tlsChallenge]
 # caServer = "https://acme-staging-v02.api.letsencrypt.org/directory"
 [[acme.domains]]
-main = "{lab-domain}"</code></pre></section><section id="problem_44" data-transition-speed="fast"><h2>Problem 4/4</h2><div class="ulist"><ul><li><p><strong>Problem:</strong></p><div class="ulist"><ul><li><p>Traefik detects itself as a docker container with a port</p></li><li><p>It tries to request a 2nd certificate for <code>edge.lab01.ddu-workshops-1.com</code>.</p></li></ul></div></li><li><p><strong>Solution:</strong> Exclude Traefik&#8217;s container with the label <code>traefik.enable=false</code>.</p></li></ul></div></section><section id="traefik_setup_12" data-transition-speed="fast"><h2>Traefik Setup 1/2</h2><div class="ulist"><ul><li><p>Step 1: Create the configuration file <code>traefik.toml</code>:</p></li></ul></div>
+main = "{lab-domain}"</code></pre></section><section id="problem_33" data-transition-speed="fast"><h2>Problem 3/3</h2><div class="ulist"><ul><li><p><strong>Problem:</strong></p><div class="ulist"><ul><li><p>Traefik detects itself as a docker container with a port</p></li><li><p>It tries to request a 2nd certificate for <code>edge.lab01.ddu-workshops-1.com</code>.</p></li></ul></div></li><li><p><strong>Solution:</strong> Exclude Traefik&#8217;s container with the label <code>traefik.enable=false</code>.</p></li></ul></div></section><section id="traefik_setup_12" data-transition-speed="fast"><h2>Traefik Setup 1/2</h2><div class="ulist"><ul><li><p>Step 1: Create the configuration file <code>traefik.toml</code>:</p></li></ul></div>
 <pre class="highlight listingblock"><code data-noescape class="toml language-toml">defaultEntryPoints = ["http", "https"]
 
 [entryPoints]
@@ -168,8 +155,6 @@ main = "{lab-domain}"</code></pre></section><section id="problem_44" data-transi
     [entryPoints.https.tls]
   [entryPoints.http]
   address = ":80"
-    [entryPoints.http.redirect]
-    entryPoint = "https"
 
 [acme]
 email = "noreply@lab.org"
@@ -211,7 +196,7 @@ watch = true</code></pre></section><section id="traefik_setup_22" data-transitio
 <div class="paragraph"><p>[ Services ]</p></div>
 <div class="paragraph"><p>--|-----|--</p></div>
 <div class="paragraph"><p>[ Pods ]</p></div></section><section id="remember_the_diagram_2" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Remember the Diagram?</h2><div class="imageblock" style=""><img src="images/traefik-architecture.png" alt="Traefik's Architecture" width="1000"></div></section><section id="in_kubernetes" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>In Kubernetes</h2><div class="imageblock" style=""><img src="images/traefik-kubernetes-diagram.png" alt="Traefik with Kubernetes Diagram" width="900"></div>
-<div class="paragraph small"><small>Diagram from <a href="https://medium.com/@geraldcroes" class="bare">https://medium.com/@geraldcroes</a></small></div></section><section id="lets_go_2" data-transition-speed="fast"><h2>Let&#8217;s Go</h2></section><section id="values_yaml_file" data-transition-speed="fast"><h2>values.yaml file</h2><div class="ulist"><ul><li><p>Step 1: Add rights on namespace:</p><pre class="highlight listingblock"><code data-noescape class="yaml language-yaml"># Allow creating the needed Role and Service Account
+<div class="paragraph small"><small>Diagram from <a href="https://medium.com/@geraldcroes" class="bare">https://medium.com/@geraldcroes</a></small></div></section><section id="lets_go_2" data-transition-speed="fast"><h2>Let&#8217;s Go</h2></section><section id="values_yml_file" data-transition-speed="fast"><h2><code>values.yml</code> file</h2><div class="ulist"><ul><li><p>Step 1: Add rights on namespace:</p><pre class="highlight listingblock"><code data-noescape class="yaml language-yaml"># Allow creating the needed Role and Service Account
 rbac:
   enabled: true</code></pre></li><li><p>Step 2: Set SSL EntryPoint with redirection:</p><pre class="highlight listingblock"><code data-noescape class="yaml language-yaml">ssl:
   enabled: true
@@ -226,8 +211,9 @@ rbac:
  --name traefik-devoxx \
  --namespace devoxx \
  --set imageTag=1.7.10 \
- --values values.yml
-helm ls</code></pre></section><section id="access_to_traefik" data-transition-speed="fast"><h2>Access to Traefik</h2><div class="ulist"><ul><li><p>Step 1: Run the command:</p><pre class="highlight listingblock"><code data-noescape class="bash language-bash">kubectl --namespace=devoxx get services</code></pre></li><li><p>Step 2: Get the Load Balancer IP:</p><div class="paragraph"><p><strong>TODO: dduportal</strong></p></div></li><li><p>Step 3: Blue-Green on Traefik instances:</p><div class="paragraph"><p><strong>TODO: dduportal</strong></p></div></li></ul></div></section><section id="reality_check_8" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Reality Check</h2><div class="paragraph"><p><a href="http://lab01.ddu-workshops-1.com/" target="_blank">http://lab01.ddu-workshops-1.com/</a></p></div>
+ --values values.yml</code></pre></section><section id="access_to_traefik" data-transition-speed="fast"><h2>Access to Traefik</h2><div class="ulist"><ul><li><p>Step 1: Run the command:</p><pre class="highlight listingblock"><code data-noescape class="bash language-bash">kubectl --namespace=devoxx get services</code></pre></li><li><p>Step 2: Once the column <code>EXTERNAL-IP</code> show an IP in <code>172&#8230;&#8203;</code>,
+then the LoadBalancer can be reached at your VM&#8217;s IP address:</p><pre class="highlight listingblock"><code data-noescape class="bash language-bash">VM_IP="$(/sbin/ifconfig eth0 | grep 'inet ' | awk '{print $2}')"
+echo "${VM_IP}" # the Kube VM IP 10.0.n.p</code></pre></li><li><p>Step 3: Use the <a href="https://bg.bastion.ddu-workshops-1.com/blue/organizations/jenkins/change-dns/activity" target="_blank">Blue-Green Jenkins job</a> to switch:</p><div class="ulist"><ul><li><p>Your domain name (<code>labXX.ddu-workshops-Y.com</code>)</p></li><li><p>To this <code>VM_IP</code> (<code>10.0.n.p</code>)</p></li></ul></div></li></ul></div></section><section id="reality_check_8" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Reality Check</h2><div class="paragraph"><p><a href="http://lab01.ddu-workshops-1.com/" target="_blank">http://lab01.ddu-workshops-1.com/</a></p></div>
 <div class="imageblock shadow" style=""><img src="images/after-traefik-up.png" alt="after traefik up"></div>
 <div class="paragraph"><p>It&#8217;s good: we have an HTTP answer!</p></div></section></section>
 <section><section id="lab_2_3" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Lab 2</h2><div class="ulist"><ul><li><p>Let&#8217;s Encrypt Certificates</p></li><li><p>Traefik</p></li><li><p><strong>Web Server</strong></p></li><li><p>CI Server</p></li><li><p>SCM: A Gitea Git Server</p></li><li><p>Web CLI</p></li></ul></div></section><section id="goal_6" data-transition-speed="fast"><h2>Goal</h2><div class="paragraph"><p>We want access to the webserver hosted in Docker through Traefik in Kubernetes.</p></div></section><section id="challenge_12" data-transition-speed="fast"><h2>Challenge 1/2</h2><div class="paragraph"><p><strong>Problem:</strong> How to tell to Traefik to route requests to the web server which is not deployed in Kubernetes?</p></div>
@@ -253,7 +239,7 @@ spec:
   # to a backend which is not managed in the Kubernets network
   type: ExternalName
   # IP of the VM in the lab1
-  externalName: 18.196.121.238</code></pre>
+  externalName: 10.0.x.y</code></pre>
 <aside class="notes"><div class="ulist"><ul><li><p>explain headless server and the different kind</p><div class="ulist"><ul><li><p>External Name</p></li><li><p>External IPs</p></li></ul></div></li></ul></div></aside></section><section id="challenge_22" data-transition-speed="fast"><h2>Challenge 2/2</h2><div class="paragraph"><p><strong>Problem:</strong> How to detect the HTTPS requests to catch?</p></div></section><section id="ingress_rule" data-transition-speed="fast"><h2>Ingress Rule</h2><div class="paragraph"><p><strong>Solution:</strong>  Catch all the incoming resquests for the <code>Path: /</code>.</p></div>
 <pre class="highlight listingblock"><code data-noescape class="yaml language-yaml">---
 apiVersion: extensions/v1beta1
@@ -296,7 +282,7 @@ spec:
   - port: 80
     name: traefik-http
   type: ExternalName
-  externalName: 18.196.121.238</code></pre></section><section id="challenge_22_2" data-transition-speed="fast"><h2>Challenge 2/2</h2><div class="paragraph"><p><strong>Problem:</strong> How to detect the HTTPS requests to catch?</p></div></section><section id="ingress_rule_2" data-transition-speed="fast"><h2>Ingress Rule</h2><div class="paragraph"><p><strong>Solution:</strong>  Catch the resquests for the <code>Path: /jenkins</code>.</p></div>
+  externalName: 10.0.x.y</code></pre></section><section id="challenge_22_2" data-transition-speed="fast"><h2>Challenge 2/2</h2><div class="paragraph"><p><strong>Problem:</strong> How to detect the HTTPS requests to catch?</p></div></section><section id="ingress_rule_2" data-transition-speed="fast"><h2>Ingress Rule</h2><div class="paragraph"><p><strong>Solution:</strong>  Catch the requests for the <code>PathPrefix:/jenkins</code>.</p></div>
 <pre class="highlight listingblock"><code data-noescape class="yaml language-yaml">---
 apiVersion: extensions/v1beta1
 kind: Ingress
@@ -360,7 +346,7 @@ spec:
   - port: 80
     name: traefik-http
   type: ExternalName
-  externalName: 18.196.121.238</code></pre></section><section id="reality_check_11" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Reality Check</h2><div class="paragraph"><p><a href="https://lab01.ddu-workshops-1.com/gitserver" target="_blank">https://lab01.ddu-workshops-1.com/gitserver</a></p></div>
+  externalName: 10.0.x.y</code></pre></section><section id="reality_check_11" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Reality Check</h2><div class="paragraph"><p><a href="https://lab01.ddu-workshops-1.com/gitserver" target="_blank">https://lab01.ddu-workshops-1.com/gitserver</a></p></div>
 <div class="imageblock shadow" style=""><img src="images/after-gitea-up.png" alt="after gitea up" width="500"></div>
 <div class="paragraph"><p>It&#8217;s good: Gitea is still available!</p></div></section></section>
 <section><section id="lab_2_6" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Lab 2</h2><div class="ulist"><ul><li><p>Let&#8217;s Encrypt Certificates</p></li><li><p>Traefik</p></li><li><p>Web Server</p></li><li><p>CI Server</p></li><li><p>SCM: A Gitea Git Server</p></li><li><p><strong>Web CLI</strong></p></li></ul></div></section><section id="goal_9" data-transition-speed="fast"><h2>Goal</h2><div class="paragraph"><p>We want to access to <a href="https://github.com/tsl0922/ttyd" target="_blank">TTYD</a> deployed in Docker through Traefik in Kubernetes.</p></div></section><section id="challenges" data-transition-speed="fast"><h2>Challenges</h2><div class="ulist"><ul><li><p><strong>Problem 1:</strong> How to tell to Traefik to route requests to TTYD which is not deployed in Kubernetes?</p><pre class="highlight listingblock"><code data-noescape class="bash language-bash">https://lab01.ddu-workshops-1.com/ttyd
@@ -380,7 +366,7 @@ spec:
   - port: 80
     name: traefik-http
   type: ExternalName
-  externalName: 18.196.121.238</code></pre></section><section id="solution_2" data-transition-speed="fast"><h2>Solution 2</h2><div class="ulist"><ul><li><p>Ingress Rule with <code>PathPrefix:/ttyd</code>:</p></li></ul></div>
+  externalName: 10.0.x.y</code></pre></section><section id="solution_2" data-transition-speed="fast"><h2>Solution 2</h2><div class="ulist"><ul><li><p>Ingress Rule with <code>PathPrefix:/ttyd</code>:</p></li></ul></div>
 <pre class="highlight listingblock"><code data-noescape class="yaml language-yaml">---
 apiVersion: extensions/v1beta1
 kind: Ingress
