@@ -95,8 +95,7 @@ services:
     - "traefik.port=8080"
     - "traefik.frontend.rule=PathPrefix:/jenkins"</code></pre>
 <div class="ulist"><ul><li><p>Step 2: update the service</p></li></ul></div>
-<pre class="highlight listingblock"><code data-noescape class="bash language-bash">docker-compose up -d jenkins</code></pre></section><section id="reality_check_4" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Reality Check</h2><div class="paragraph"><p>Click on the "Jenkins" link:</p></div>
-<div class="paragraph"><p><a href="http://lab01.demo.containous.cloud/jenkins" target="_blank">http://lab01.demo.containous.cloud/jenkins</a></p></div>
+<pre class="highlight listingblock"><code data-noescape class="bash language-bash">docker-compose up -d jenkins</code></pre></section><section id="reality_check_4" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Reality Check</h2><div class="paragraph"><p><a href="http://lab01.demo.containous.cloud/jenkins" target="_blank">http://lab01.demo.containous.cloud/jenkins</a></p></div>
 <div class="imageblock shadow" style=""><img src="images/after-jenkins-up.png" alt="after jenkins up" width="500"></div>
 <div class="paragraph"><p>It&#8217;s good: we can setup Jenkins!</p></div></section></section>
 <section><section id="agenda_5" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Agenda</h2><div class="ulist"><ul><li><p>Traefik</p></li><li><p>Web Server</p></li><li><p>CI Server</p></li><li><p><strong>SCM: A Gitea Git Server</strong></p></li><li><p>Web CLI</p></li><li><p>SSL for everyone</p></li></ul></div></section><section id="goal_3" data-transition-speed="fast"><h2>Goal</h2><div class="ulist"><ul><li><p>We want to host our own git server</p><div class="ulist"><ul><li><p>Let&#8217;s use <a href="https://gitea.io/en-us/" target="_blank">Gitea, A painless self-hosted Git service.</a></p></li></ul></div></li></ul></div></section><section id="challenge" data-transition-speed="fast"><h2>Challenge</h2><div class="ulist"><ul><li><p><strong>Problem:</strong></p><div class="ulist"><ul><li><p>Gitea only serves requests under <code>/</code>: How to remove the prefix <code>/gitserver</code>?</p></li></ul></div></li></ul></div>
@@ -196,7 +195,13 @@ services:
 <div class="ulist"><ul><li><p>keep the Docker services</p></li><li><p>migrate Traefik to Kubernetes</p></li><li><p>migrate the Let&#8217;s Encrypt certificates</p></li><li><p>access to the Docker services through Traefik in Kubernetes</p></li></ul></div></section><section id="infrastructure_setup_2" data-transition-speed="fast"><h2>Infrastructure Setup</h2><div class="ulist"><ul><li><p>A K3S cluster on a VM reachable from a public IP <code>35.178.178.237</code></p></li><li><p><code>kubectl</code> and <code>helm</code> installed on the client machines</p></li></ul></div>
 <aside class="notes"><div class="ulist"><ul><li><p>Explain what is K3S and why we are using it</p></li><li><p>Explain Helm behavior (tiller server side), interest (do not manipulate amount of YAML files)</p></li></ul></div></aside></section></section>
 <section><section id="agenda_8" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Agenda</h2><div class="ulist"><ul><li><p><strong>Let&#8217;s Encrypt Certificates</strong></p></li><li><p>Traefik</p></li><li><p>Web Server</p></li><li><p>CI Server</p></li><li><p>SCM: A Gitea Git Server</p></li><li><p>Web CLI</p></li></ul></div></section><section id="goal_5" data-transition-speed="fast"><h2>Goal</h2><div class="ulist"><ul><li><p>We want to use our generated Let&#8217;s Encrypt certificates</p><div class="ulist"><ul><li><p>We do not want to exceed <a href="https://letsencrypt.org/docs/rate-limits/" target="_blank">the ACME Rate Limits.</a></p></li></ul></div></li></ul></div></section><section id="lab_to_define" data-transition-speed="fast"><h2>Lab to define</h2><div class="paragraph"><p>TODO: dduportal</p></div></section></section>
-<section><section id="agenda_9" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Agenda</h2><div class="ulist"><ul><li><p>Let&#8217;s Encrypt Certificates</p></li><li><p><strong>Traefik</strong></p></li><li><p>Web Server</p></li><li><p>CI Server</p></li><li><p>SCM: A Gitea Git Server</p></li><li><p>Web CLI</p></li></ul></div></section><section id="remember_the_diagram_2" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Remember the Diagram?</h2><div class="imageblock" style=""><img src="images/traefik-architecture.png" alt="Traefik's Architecture" width="1000"></div></section><section id="in_kubernetes" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>In Kubernetes</h2><div class="imageblock" style=""><img src="images/traefik-kubernetes-diagram.png" alt="Traefik with Kubernetes Diagram" width="900"></div>
+<section><section id="agenda_9" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Agenda</h2><div class="ulist"><ul><li><p>Let&#8217;s Encrypt Certificates</p></li><li><p><strong>Traefik</strong></p></li><li><p>Web Server</p></li><li><p>CI Server</p></li><li><p>SCM: A Gitea Git Server</p></li><li><p>Web CLI</p></li></ul></div></section><section id="north_south_connection_in_kubernetes" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>North-South connection in Kubernetes</h2><div class="paragraph"><p>internet</p></div>
+<div class="paragraph"><p>|</p></div>
+<div class="paragraph"><p>[ Ingress ]</p></div>
+<div class="paragraph"><p>--|-----|--</p></div>
+<div class="paragraph"><p>[ Services ]</p></div>
+<div class="paragraph"><p>--|-----|--</p></div>
+<div class="paragraph"><p>[ Pods ]</p></div></section><section id="remember_the_diagram_2" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Remember the Diagram?</h2><div class="imageblock" style=""><img src="images/traefik-architecture.png" alt="Traefik's Architecture" width="1000"></div></section><section id="in_kubernetes" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>In Kubernetes</h2><div class="imageblock" style=""><img src="images/traefik-kubernetes-diagram.png" alt="Traefik with Kubernetes Diagram" width="900"></div>
 <div class="paragraph small"><small>Diagram from <a href="https://medium.com/@geraldcroes" class="bare">https://medium.com/@geraldcroes</a></small></div></section><section id="lets_go_2" data-transition-speed="fast"><h2>Let&#8217;s Go</h2></section><section id="initialize_helm" data-transition-speed="fast"><h2>Initialize Helm</h2><pre class="highlight listingblock"><code data-noescape class="bash language-bash">curl https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get | bash
 # add a service account within a namespace to segregate tiller
 kubectl --namespace kube-system create sa tiller
@@ -314,8 +319,7 @@ spec:
       - path: /jenkins
         backend:
           serviceName: jenkins-service
-          servicePort: traefik-http</code></pre></section><section id="apply_the_configuration_2" data-transition-speed="fast"><h2>Apply the configuration</h2><pre class="highlight listingblock"><code data-noescape class="bash language-bash">kubectl apply -f ./jenkins/svc-ingress.yml</code></pre></section><section id="reality_check_10" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Reality Check</h2><div class="paragraph"><p>Click on the "Jenkins" link:</p></div>
-<div class="paragraph"><p><a href="https://lab01.demo.containous.cloud/jenkins" target="_blank">https://lab01.demo.containous.cloud/jenkins</a></p></div>
+          servicePort: traefik-http</code></pre></section><section id="apply_the_configuration_2" data-transition-speed="fast"><h2>Apply the configuration</h2><pre class="highlight listingblock"><code data-noescape class="bash language-bash">kubectl apply -f ./jenkins/svc-ingress.yml</code></pre></section><section id="reality_check_10" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Reality Check</h2><div class="paragraph"><p><a href="https://lab01.demo.containous.cloud/jenkins" target="_blank">https://lab01.demo.containous.cloud/jenkins</a></p></div>
 <div class="imageblock shadow" style=""><img src="images/after-jenkins-up.png" alt="after jenkins up" width="500"></div>
 <div class="paragraph"><p>It&#8217;s good: we still can setup Jenkins!</p></div></section></section>
 <section><section id="agenda_12" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Agenda</h2><div class="ulist"><ul><li><p>Let&#8217;s Encrypt Certificates</p></li><li><p>Traefik</p></li><li><p>Web Server</p></li><li><p>CI Server</p></li><li><p><strong>SCM: A Gitea Git Server</strong></p></li><li><p>Web CLI</p></li></ul></div></section><section id="goal_8" data-transition-speed="fast"><h2>Goal</h2><div class="ulist"><ul><li><p>We want access to the Git server hosted in Docker through Traefik in Kubernetes</p></li></ul></div></section><section id="challenge_12_3" data-transition-speed="fast"><h2>Challenge 1/2</h2><div class="ulist"><ul><li><p><strong>Problem:</strong></p><div class="ulist"><ul><li><p>Gitea only serves requests under <code>/</code></p></li><li><p>Traefik in Docker already removes the prefix <code>/gitserver</code></p></li></ul></div></li></ul></div>
@@ -403,6 +407,74 @@ spec:
 <div class="imageblock shadow" style=""><img src="images/after-ttyd-up.png" alt="after ttyd up" width="500"></div>
 <div class="paragraph"><p>It&#8217;s good: we can continue to develop in a web browser!</p></div></section></section>
 <section><section id="the_castle" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>The Castle</h2><div class="imageblock" style=""><img src="images/carcassonne.jpg" alt="carcassonne"></div></section><section id="the_castle_2" data-transition-speed="fast"><h2>The Castle</h2><div class="ulist"><ul><li><p>We want to terminate the migration of our services from the K3S cluster.</p></li></ul></div></section><section id="infrastructure_setup_3" data-transition-speed="fast"><h2>Infrastructure Setup</h2><div class="ulist"><ul><li><p>A K3S cluster on a VM reachable from a public IP <code>35.178.178.237</code></p></li><li><p><code>kubectl</code> and <code>helm</code> installed on the client machines</p></li></ul></div></section></section>
+<section><section id="agenda_14" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Agenda</h2><div class="ulist"><ul><li><p><strong>CI Server</strong></p></li><li><p>SCM: A Gitea Git Server</p></li><li><p>Web CLI</p></li><li><p>Web Server</p></li></ul></div></section><section id="goal_10" data-transition-speed="fast"><h2>Goal</h2><div class="ulist"><ul><li><p>We want to host the CI in Kubernetes and access it through Traefik</p></li></ul></div></section><section id="challenge_13_2" data-transition-speed="fast"><h2>Challenge 1/3</h2><div class="ulist"><ul><li><p><strong>Problem:</strong> How to host the CI in Kubernetes?</p></li></ul></div></section><section id="deployment_object" data-transition-speed="fast"><h2>Deployment Object</h2><div class="ulist"><ul><li><p><strong>Solution:</strong> Deploy it as a <code>Deployment</code> object.</p></li></ul></div>
+<pre class="highlight listingblock"><code data-noescape class="yaml language-yaml">---
+kind: Deployment
+apiVersion: extensions/v1beta1
+metadata:
+  name: jenkins-full-deployment
+  namespace: devoxx
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        guilde: ci
+        faction: jenkins
+    spec:
+      containers:
+        - name: jenkins-full-container
+          image: jenkins/jenkins:2.150.3-alpine
+          imagePullPolicy: IfNotPresent
+          env:
+          - name: JENKINS_OPTS
+            value: "--prefix=/jenkins"</code></pre>
+<aside class="notes"><div class="ulist"><ul><li><p>Explain differences between pod/container</p></li><li><p>Explain differnces between deployment/statefulset/deamonset</p></li><li><p>Explain the labels semantic/interest</p></li></ul></div></aside></section><section id="challenge_22_4" data-transition-speed="fast"><h2>Challenge 2/2</h2><div class="ulist"><ul><li><p><strong>Problem:</strong> How to access to the CI?</p></li></ul></div>
+<pre class="highlight listingblock"><code data-noescape class="bash language-bash">https://lab01.demo.containous.cloud/jenkins
+  -&gt; Traefik
+    -&gt; https://&lt;Jenkins Private IP&gt;/jenkins</code></pre></section><section id="service" data-transition-speed="fast"><h2>Service</h2><pre class="highlight listingblock"><code data-noescape class="yaml language-yaml">---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jenkins-full-service
+  namespace: devoxx
+  labels:
+    guilde: ci
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8080
+      name: jenkins-http
+    - port: 50000
+      name: jenkins-agent
+  selector:
+    guilde: ci
+    faction: jenkins</code></pre>
+<aside class="notes"><div class="ulist"><ul><li><p>Explain the selector interest/use</p></li><li><p>Make parallel The Voice?</p></li></ul></div></aside></section><section id="ingress_rule_3" data-transition-speed="fast"><h2>Ingress Rule</h2><pre class="highlight listingblock"><code data-noescape class="yaml language-yaml">---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: jenkins-full-ingress
+  namespace: devoxx
+  labels:
+    guilde: ci
+  annotations:
+    kubernetes.io/ingress.class: 'traefik'
+    traefik.frontend.rule.type: PathPrefix
+spec:
+  rules:
+  - host:
+    http:
+      paths:
+      - path: /jenkins
+        backend:
+          serviceName: jenkins-full-service
+          servicePort: jenkins-http</code></pre></section><section id="apply_the_configuration_3" data-transition-speed="fast"><h2>Apply the configuration</h2><pre class="highlight listingblock"><code data-noescape class="bash language-bash"># Add the new objetcs
+kubectl apply -f ./03-k8s-apps/jenkins/deployment-svc-ingress.yml
+# Delete the headless service and its ingress rule (blue-green)
+kubectl delete -f ./02-k8s-traefik/jenkins/svc-ingress.yml</code></pre></section><section id="reality_check_13" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Reality Check</h2><div class="paragraph"><p><a href="https://lab01.demo.containous.cloud/jenkins" target="_blank">https://lab01.demo.containous.cloud/jenkins</a></p></div>
+<div class="imageblock shadow" style=""><img src="images/after-jenkins-up.png" alt="after jenkins up" width="500"></div>
+<div class="paragraph"><p>It&#8217;s good: we can setup Jenkins in Kubernetes!</p></div></section></section>
 <section><section id="we_have" data-transition-speed="fast" data-background-image="images/stickers.jpg" data-background-size="cover"><h2>We have</h2><div class="paragraph title"><p>stickers!</p></div></section><section id="we_are_hiring" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>We are hiring!</h2><div class="imageblock" style=""><img src="images/containous-logo.png" alt="Containous"></div>
 <pre class="highlight listingblock"><code data-noescape>docker run -it containous/jobs</code></pre></section></section>
 <section id="thank_you" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Thank you!</h2><div class="paragraph"><p><a href="https://twitter.com/nicomengin"><span class="icon"><i class="fa fa-twitter"></i></span> @nicomengin</a>
