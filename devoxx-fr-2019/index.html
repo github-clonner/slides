@@ -188,18 +188,16 @@ watch = true</code></pre></section><section id="traefik_setup_22" data-transitio
 <section><section id="saruman_tower_migrate_traefik_to_kubernetes" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Saruman Tower: Migrate Traefik To Kubernetes</h2><div class="imageblock" style=""><img src="images/tower.jpg" alt="tower" width="400px" height="600px"></div></section><section id="saruman_tower" data-transition-speed="fast"><h2>Saruman Tower</h2><div class="paragraph"><p>We want to begin the migration of our services from the our VM to a Kubernetes cluster:</p></div>
 <div class="ulist"><ul><li><p>keep the Docker services</p></li><li><p>migrate Traefik to Kubernetes</p></li><li><p>migrate the Let&#8217;s Encrypt certificates</p></li><li><p>access to the Docker services through Traefik in Kubernetes</p></li></ul></div></section><section id="infrastructure_setup_2" data-transition-speed="fast"><h2>Infrastructure Setup</h2><div class="ulist"><ul><li><p>A K3S cluster on a VM reachable from a public IP <code>35.178.178.237</code></p></li><li><p><code>kubectl</code> and <code>helm</code> installed on the client machines</p></li></ul></div>
 <aside class="notes"><div class="ulist"><ul><li><p>Explain what is K3S and why we are using it</p></li><li><p>Explain Helm behavior (tiller server side), interest (do not manipulate amount of YAML files)</p></li></ul></div></aside></section></section>
-<section><section id="lab_2" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Lab 2</h2><div class="ulist"><ul><li><p><strong>Let&#8217;s Encrypt Certificates</strong></p></li><li><p>Traefik</p></li><li><p>Web Server</p></li><li><p>CI Server</p></li><li><p>SCM: A Gitea Git Server</p></li><li><p>Web CLI</p></li></ul></div></section><section id="goal_5" data-transition-speed="fast"><h2>Goal</h2><div class="ulist"><ul><li><p>We want to use our generated Let&#8217;s Encrypt certificates.</p><div class="ulist"><ul><li><p>We do not want to exceed <a href="https://letsencrypt.org/docs/rate-limits/" target="_blank">the ACME Rate Limits.</a>.</p></li></ul></div></li></ul></div></section><section id="retrieve_certificates_from_docker" data-transition-speed="fast"><h2>Retrieve Certificates from Docker</h2><div class="ulist"><ul><li><p>From the "Legacy" (Docker) VM:</p></li></ul></div>
+<section><section id="lab_2" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Lab 2</h2><div class="ulist"><ul><li><p><strong>Let&#8217;s Encrypt Certificates</strong></p></li><li><p>Traefik</p></li><li><p>Web Server</p></li><li><p>CI Server</p></li><li><p>SCM: A Gitea Git Server</p></li><li><p>Web CLI</p></li></ul></div></section><section id="goal_5" data-transition-speed="fast"><h2>Goal</h2><div class="ulist"><ul><li><p>We want to use our generated Let&#8217;s Encrypt certificates.</p><div class="ulist"><ul><li><p>We do not want to exceed <a href="https://letsencrypt.org/docs/rate-limits/" target="_blank">the ACME Rate Limits.</a>.</p></li></ul></div></li></ul></div></section><section id="retrieve_certificates_from_docker" data-transition-speed="fast"><h2>Retrieve Certificates from Docker</h2><div class="ulist"><ul><li><p>Step 1: From the "Legacy" (Docker) VM:</p></li></ul></div>
 <pre class="highlight listingblock"><code data-noescape class="bash language-bash"># Get Traefik Container ID
 TRAEFIK_CONTAINER_ID="$(docker ps | grep traefik | grep edge | awk '{print $1}')"
 
 # Generate a file "certs.b64" in the user home
 docker run --rm --volumes-from="${TRAEFIK_CONTAINER_ID}" -t \
     alpine cat /acme/acme.json | base64 > ~/certs.b64</code></pre>
-<div class="ulist"><ul><li><p>From the "bastion", copy the certificates to the new VM</p></li></ul></div>
-<pre class="highlight listingblock"><code data-noescape class="bash language-bash">ssh {docker_ip} cat certs.b64 | ssh 10.0.n.p "cat > certs.b64"</code></pre></section><section id="load_certificates_in_kubernetes_1" data-transition-speed="fast"><h2>Load Certificates in Kubernetes 1</h2><div class="paragraph"><p>On the "Kube" VM, we create a Persistent Volume and populate it
-with the ACME data:</p></div>
-<div class="ulist"><ul><li><p>Step 1: Prepare a namespace for the lab:</p><pre class="highlight listingblock"><code data-noescape class="bash language-bash">kubectl create namespace devoxx</code></pre></li><li><p>Step 1: file <code>acme-pvc.yml</code>:</p><pre class="highlight listingblock"><code data-noescape class="yaml language-yaml">---
-apiVersion: v1
+<div class="ulist"><ul><li><p>Step 2: From the "bastion", copy the certificates to the new VM</p></li></ul></div>
+<pre class="highlight listingblock"><code data-noescape class="bash language-bash">ssh {docker_ip} cat certs.b64 | ssh 10.0.n.p "cat > certs.b64"</code></pre></section><section id="import_certificates_into_kubernetes" data-transition-speed="fast"><h2>Import Certificates into Kubernetes</h2><div class="paragraph"><p><strong>Idea:</strong></p></div>
+<div class="ulist"><ul><li><p>On the "Kube" VM, we&#8217;ll create a pod with a PVC ("Persistent Volume Claim").</p></li><li><p>Then, using this pod, we&#8217;ll populate the persistent volume with the <code>acme.json</code> data.</p></li><li><p>After that, we&#8217;ll be able to install the Traefik Ingress configured to use this PVC.</p></li></ul></div></section><section id="prepare_pvc_in_kubernetes" data-transition-speed="fast"><h2>Prepare PVC in Kubernetes</h2><div class="ulist"><ul><li><p>Step 1: Create the PVC ("Persistent Volume Claim") manifest file <code>acme-pvc.yml</code>:</p><pre class="highlight listingblock"><code data-noescape class="yaml language-yaml">apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: acme-data-pvc
@@ -210,8 +208,8 @@ spec:
   storageClassName: local-path
   resources:
     requests:
-      storage: 200Mi</code></pre></li><li><p>Step 2: create it:</p><pre class="highlight listingblock"><code data-noescape class="bash language-bash">kubectl apply -f acme-pvc.yml</code></pre></li></ul></div></section><section id="load_certificates_in_kubernetes_2" data-transition-speed="fast"><h2>Load Certificates in Kubernetes 2</h2><div class="ulist"><ul><li><p>Step 1: file <code>acme-pod.yml</code>:</p><pre class="highlight listingblock"><code data-noescape class="yaml language-yaml">---
-apiVersion: v1
+      storage: 200Mi</code></pre></li><li><p>Step 2: create namespace and PVC:</p><pre class="highlight listingblock"><code data-noescape class="bash language-bash">kubectl create namespace devoxx
+kubectl apply -f acme-pvc.yml</code></pre></li></ul></div></section><section id="prepare_the_acme_loader_deployment" data-transition-speed="fast"><h2>Prepare the "acme-loader" Deployment</h2><div class="ulist"><ul><li><p>Step 1: Create the manifest file <code>acme-deploy.yml</code>:</p><pre class="highlight listingblock"><code data-noescape class="yaml language-yaml">apiVersion: v1
 kind: Pod
 metadata:
   name: acme-loader
@@ -227,13 +225,13 @@ spec:
   volumes:
   - name: acme
     persistentVolumeClaim:
-      claimName: acme-data-pvc</code></pre></li><li><p>Step 2: create it:</p><pre class="highlight listingblock"><code data-noescape class="bash language-bash">kubectl apply -f acme-pod.yml</code></pre></li></ul></div>
-<div class="paragraph"><p>watch kubectl get pod,pv,pvc --namespace=devoxx</p></div>
-<div class="paragraph"><p>base64 --decode certs.b64 &gt; ~/acme.json
+      claimName: acme-data-pvc</code></pre></li><li><p>Step 2: create the deployment:</p><pre class="highlight listingblock"><code data-noescape class="bash language-bash">kubectl apply -f acme-pod.yml</code></pre></li></ul></div></section><section id="load_acme_data_in_kubernetes" data-transition-speed="fast"><h2>Load ACME data in Kubernetes</h2><div class="ulist"><ul><li><p>Step 1: Wait for the pod and pvc to be created:</p><pre class="highlight listingblock"><code data-noescape class="bash language-bash"># Expecting the pod "acme-loader" to be in state "Running"
+watch kubectl get pod,pv,pvc --namespace=devoxx
+# Then hit CTRL-C</code></pre></li><li><p>Step 2: Decode ACME data and copy it:</p><pre class="highlight listingblock"><code data-noescape class="bash language-bash">base64 --decode certs.b64 > ~/acme.json
 chmod 0600 ~/acme.json
 kubectl --namespace=devoxx cp ~/acme.json acme-loader:/acme/
-kubectl exec --namespace=devoxx acme-loader&#8201;&#8212;&#8201;ls -l /acme
-kubectl delete -f acme-pod.yml</p></div></section></section>
+kubectl exec --namespace=devoxx acme-loader -- ls -l /acme
+# the file "acme.json" MUST be in 600 (-rw-------)</code></pre></li><li><p>Step 3: Remove the "acme-loader" deployment:</p><pre class="highlight listingblock"><code data-noescape class="bash language-bash">kubectl delete -f acme-pod.yml</code></pre></li></ul></div></section><section id="thats_all" data-transition-speed="fast"><h2>That&#8217;s all</h2><div class="paragraph"><p>Ready to go to the next step!</p></div></section></section>
 <section><section id="lab_2_2" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Lab 2</h2><div class="ulist"><ul><li><p>Let&#8217;s Encrypt Certificates</p></li><li><p><strong>Traefik</strong></p></li><li><p>Web Server</p></li><li><p>CI Server</p></li><li><p>SCM: A Gitea Git Server</p></li><li><p>Web CLI</p></li></ul></div></section><section id="north_south_connection_in_kubernetes" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>North-South connection in Kubernetes</h2><div class="paragraph"><p>Internet</p></div>
 <div class="paragraph"><p>|</p></div>
 <div class="paragraph"><p>[ Ingress ]</p></div>
