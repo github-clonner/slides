@@ -143,7 +143,9 @@ email = "noreply@lab.org"
 storage = "/acme/acme.json"
 entryPoint = "https"
 # caServer = "https://acme-staging-v02.api.letsencrypt.org/directory"
+
 [acme.tlsChallenge]
+
 [[acme.domains]]
 main = "labXX.ddu-workshops-Y.com"</code></pre></section><section id="problem_33" data-transition-speed="fast"><h2>Problem 3/3</h2><div class="ulist"><ul><li><p><strong>Problem:</strong></p><div class="ulist"><ul><li><p>Traefik detects itself as a docker container with a port</p></li><li><p>It tries to request a 2nd certificate for <code>edge.labXX.ddu-workshops-Y.com</code>.</p></li></ul></div></li><li><p><strong>Solution:</strong> Exclude Traefik&#8217;s container with the label <code>traefik.enable=false</code>.</p></li></ul></div></section><section id="traefik_setup_12" data-transition-speed="fast"><h2>Traefik Setup 1/2</h2><div class="ulist"><ul><li><p>Step 1: Create the configuration file <code>traefik.toml</code>:</p></li></ul></div>
 <pre class="highlight listingblock"><code data-noescape class="toml language-toml">defaultEntryPoints = ["http", "https"]
@@ -160,7 +162,9 @@ email = "noreply@lab.org"
 storage = "/acme/acme.json"
 entryPoint = "https"
 # caServer = "https://acme-staging-v02.api.letsencrypt.org/directory"
+
 [acme.tlsChallenge]
+
 [[acme.domains]]
 main = "labXX.ddu-workshops-Y.com"
 
@@ -230,13 +234,13 @@ spec:
   volumes:
   - name: acme
     persistentVolumeClaim:
-      claimName: acme-data-pvc</code></pre></li><li><p>Step 2: create the deployment:</p><pre class="highlight listingblock"><code data-noescape class="bash language-bash">kubectl apply -f acme-pod.yml</code></pre></li></ul></div></section><section id="load_acme_data_in_kubernetes" data-transition-speed="fast"><h2>Load ACME data in Kubernetes</h2><div class="ulist"><ul><li><p>Step 1: Wait for the pod and pvc to be created:</p><pre class="highlight listingblock"><code data-noescape class="bash language-bash"># Expecting the pod "acme-loader" to be in state "Running"
+      claimName: acme-data-pvc</code></pre></li><li><p>Step 2: create the deployment:</p><pre class="highlight listingblock"><code data-noescape class="bash language-bash">kubectl apply -f acme-deploy.yml</code></pre></li></ul></div></section><section id="load_acme_data_in_kubernetes" data-transition-speed="fast"><h2>Load ACME data in Kubernetes</h2><div class="ulist"><ul><li><p>Step 1: Wait for the pod and pvc to be created:</p><pre class="highlight listingblock"><code data-noescape class="bash language-bash"># Expecting the pod "acme-loader" to be in state "Running"
 watch kubectl get pod,pv,pvc --namespace=devoxx
 # Then hit CTRL-C</code></pre></li><li><p>Step 2: Decode ACME data and copy it:</p><pre class="highlight listingblock"><code data-noescape class="bash language-bash">base64 --decode certs.b64 > ~/acme.json
 chmod 0600 ~/acme.json
 kubectl --namespace=devoxx cp ~/acme.json acme-loader:/acme/
 kubectl exec --namespace=devoxx acme-loader -- ls -l /acme
-# the file "acme.json" MUST be in 600 (-rw-------)</code></pre></li><li><p>Step 3: Remove the "acme-loader" deployment:</p><pre class="highlight listingblock"><code data-noescape class="bash language-bash">kubectl delete -f acme-pod.yml</code></pre></li></ul></div></section><section id="install_traefik_ingress" data-transition-speed="fast"><h2>Install Traefik Ingress</h2></section><section id="create_a_values_yml_file" data-transition-speed="fast"><h2>Create a <code>values.yml</code> file</h2><div class="ulist"><ul><li><p>Step 1: Add rights on namespace:</p><pre class="highlight listingblock"><code data-noescape class="yaml language-yaml"># Allow creating the needed Role and Service Account
+# the file "acme.json" MUST be in 600 (-rw-------)</code></pre></li><li><p>Step 3: Remove the "acme-loader" deployment:</p><pre class="highlight listingblock"><code data-noescape class="bash language-bash">kubectl delete -f acme-deploy.yml</code></pre></li></ul></div></section><section id="install_traefik_ingress" data-transition-speed="fast"><h2>Install Traefik Ingress</h2></section><section id="create_a_values_yml_file" data-transition-speed="fast"><h2>Create a <code>values.yml</code> file</h2><div class="ulist"><ul><li><p>Step 1: Add rights on namespace:</p><pre class="highlight listingblock"><code data-noescape class="yaml language-yaml"># Allow creating the needed Role and Service Account
 rbac:
   enabled: true</code></pre></li><li><p>Step 2: Set SSL EntryPoint with redirection:</p><pre class="highlight listingblock"><code data-noescape class="yaml language-yaml">ssl:
   enabled: true
@@ -262,7 +266,7 @@ curl 10.0.n.p
 <pre class="highlight listingblock"><code data-noescape class="bash language-bash">https://labXX.ddu-workshops-Y.com/index.html
   -&gt; Traefik Kubernetes
     -&gt; Traefik Docker
-      -&gt; https://&lt;Webserver Private IP&gt;/index.html</code></pre></section><section id="headless_service" data-transition-speed="fast"><h2>Headless Service</h2><div class="paragraph"><p><strong>Solution:</strong> Define a service linked to an external address in <code>lab2-web.yml</code>.</p></div>
+      -&gt; https://&lt;Webserver Private IP&gt;/index.html</code></pre></section><section id="headless_service" data-transition-speed="fast"><h2>Headless Service</h2><div class="paragraph"><p><strong>Solution:</strong> Define a service linked to an external address in <code>~/02-k8s-traefik/web.yml</code>.</p></div>
 <pre class="highlight listingblock"><code data-noescape class="yaml language-yaml">---
 apiVersion: v1
 kind: Service
@@ -282,7 +286,7 @@ spec:
   type: ExternalName
   # IP of the VM in the lab1
   externalName: 10.0.x.y</code></pre>
-<aside class="notes"><div class="ulist"><ul><li><p>explain headless server and the different kind</p><div class="ulist"><ul><li><p>External Name</p></li><li><p>External IPs</p></li></ul></div></li></ul></div></aside></section><section id="challenge_22" data-transition-speed="fast"><h2>Challenge 2/2</h2><div class="paragraph"><p><strong>Problem:</strong> How to detect the HTTPS requests to catch?</p></div></section><section id="ingress_rule" data-transition-speed="fast"><h2>Ingress Rule</h2><div class="paragraph"><p><strong>Solution:</strong> Define a rule to catch all the incoming resquests for the <code>Path: /</code> in <code>lab2-web.yml</code>.</p></div>
+<aside class="notes"><div class="ulist"><ul><li><p>explain headless server and the different kind</p><div class="ulist"><ul><li><p>External Name</p></li><li><p>External IPs</p></li></ul></div></li></ul></div></aside></section><section id="challenge_22" data-transition-speed="fast"><h2>Challenge 2/2</h2><div class="paragraph"><p><strong>Problem:</strong> How to detect the HTTPS requests to catch?</p></div></section><section id="ingress_rule" data-transition-speed="fast"><h2>Ingress Rule</h2><div class="paragraph"><p><strong>Solution:</strong> Define a rule to catch all the incoming resquests for the <code>PathPrefix:/</code> in <code>~/02-k8s-traefik/web.yml</code>.</p></div>
 <pre class="highlight listingblock"><code data-noescape class="yaml language-yaml">---
 apiVersion: extensions/v1beta1
 kind: Ingress
@@ -303,14 +307,14 @@ spec:
       - path: /
         backend:
           serviceName: web-service
-          servicePort: traefik-http</code></pre></section><section id="apply_the_configuration" data-transition-speed="fast"><h2>Apply the configuration</h2><pre class="highlight listingblock"><code data-noescape class="bash language-bash">kubectl apply -f ./lab2-web.yml</code></pre></section><section id="reality_check_9" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Reality Check</h2><div class="paragraph"><p><a href="https://labXX.ddu-workshops-Y.com/" target="_blank">https://labXX.ddu-workshops-Y.com/</a></p></div>
+          servicePort: traefik-http</code></pre></section><section id="apply_the_configuration" data-transition-speed="fast"><h2>Apply the configuration</h2><pre class="highlight listingblock"><code data-noescape class="bash language-bash">kubectl apply -f ~/02-k8s-traefik/web.yml</code></pre></section><section id="reality_check_9" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Reality Check</h2><div class="paragraph"><p><a href="https://labXX.ddu-workshops-Y.com/" target="_blank">https://labXX.ddu-workshops-Y.com/</a></p></div>
 <div class="imageblock shadow" style=""><img src="images/lab1-after-webserver-up.png" alt="lab1 after webserver up" width="500"></div>
 <div class="paragraph"><p>It&#8217;s good: we have a web page!</p></div></section></section>
 <section><section id="lab_2_3" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Lab 2</h2><div class="imageblock" style="float: left"><img src="images/gandalf-gopher.png" alt="Gandalf Gopher" height="400"></div><div class="ulist"><ul><li><p>Traefik</p></li><li><p>Web Server</p></li><li><p><strong>CI Server</strong></p></li><li><p>SCM: A Gitea Git Server</p></li><li><p>Web CLI</p></li></ul></div></section><section id="goal_7" data-transition-speed="fast"><h2>Goal</h2><div class="paragraph"><p>We want access to the CI hosted in Docker through Traefik in Kubernetes</p></div></section><section id="challenge_12_2" data-transition-speed="fast"><h2>Challenge 1/2</h2><div class="paragraph"><p><strong>Problem:</strong> How to tell to Traefik to route requests to the CI which is not deployed in Kubernetes?</p></div>
 <pre class="highlight listingblock"><code data-noescape class="bash language-bash">https://labXX.ddu-workshops-Y.com/jenkins
   -&gt; Traefik Kubernetes
     -&gt; Traefik Docker
-      -&gt; https://&lt;Jenkins Private IP&gt;/jenkins</code></pre></section><section id="headless_service_2" data-transition-speed="fast"><h2>Headless Service</h2><div class="paragraph"><p><strong>Solution:</strong> Use (once again) a service linked to an external address in <code>lab2-ci.yml</code>.</p></div>
+      -&gt; https://&lt;Jenkins Private IP&gt;/jenkins</code></pre></section><section id="headless_service_2" data-transition-speed="fast"><h2>Headless Service</h2><div class="paragraph"><p><strong>Solution:</strong> Use (once again) a service linked to an external address in <code>~/02-k8s-traefik/ci.yml</code>.</p></div>
 <pre class="highlight listingblock"><code data-noescape class="yaml language-yaml">---
 apiVersion: v1
 kind: Service
@@ -324,7 +328,7 @@ spec:
   - port: 80
     name: traefik-http
   type: ExternalName
-  externalName: 10.0.x.y</code></pre></section><section id="challenge_22_2" data-transition-speed="fast"><h2>Challenge 2/2</h2><div class="paragraph"><p><strong>Problem:</strong> How to detect the HTTPS requests to catch?</p></div></section><section id="ingress_rule_2" data-transition-speed="fast"><h2>Ingress Rule</h2><div class="paragraph"><p><strong>Solution:</strong> Define a rule to catch all the incoming resquests for the <code>Path:/jenkins</code> in <code>lab2-ci.yml</code>.</p></div>
+  externalName: 10.0.x.y</code></pre></section><section id="challenge_22_2" data-transition-speed="fast"><h2>Challenge 2/2</h2><div class="paragraph"><p><strong>Problem:</strong> How to detect the HTTPS requests to catch?</p></div></section><section id="ingress_rule_2" data-transition-speed="fast"><h2>Ingress Rule</h2><div class="paragraph"><p><strong>Solution:</strong> Define a rule to catch all the incoming resquests for the <code>PathPrefix:/jenkins</code> in <code>~/02-k8s-traefik/ci.yml</code>.</p></div>
 <pre class="highlight listingblock"><code data-noescape class="yaml language-yaml">---
 apiVersion: extensions/v1beta1
 kind: Ingress
@@ -345,14 +349,14 @@ spec:
       - path: /jenkins
         backend:
           serviceName: jenkins-service
-          servicePort: traefik-http</code></pre></section><section id="apply_the_configuration_2" data-transition-speed="fast"><h2>Apply the configuration</h2><pre class="highlight listingblock"><code data-noescape class="bash language-bash">kubectl apply -f ./lab2-ci.yml</code></pre></section><section id="reality_check_10" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Reality Check</h2><div class="paragraph"><p><a href="https://labXX.ddu-workshops-Y.com/jenkins" target="_blank">https://labXX.ddu-workshops-Y.com/jenkins</a></p></div>
+          servicePort: traefik-http</code></pre></section><section id="apply_the_configuration_2" data-transition-speed="fast"><h2>Apply the configuration</h2><pre class="highlight listingblock"><code data-noescape class="bash language-bash">kubectl apply -f ~/02-k8s-traefik/ci.yml</code></pre></section><section id="reality_check_10" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Reality Check</h2><div class="paragraph"><p><a href="https://labXX.ddu-workshops-Y.com/jenkins" target="_blank">https://labXX.ddu-workshops-Y.com/jenkins</a></p></div>
 <div class="imageblock" style=""><img src="images/after-jenkins-up.png" alt="after jenkins up" width="500"></div>
 <div class="paragraph"><p>It&#8217;s good: we still can setup Jenkins!</p></div></section></section>
 <section><section id="lab_2_4" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Lab 2</h2><div class="imageblock" style="float: left"><img src="images/gandalf-gopher.png" alt="Gandalf Gopher" height="400"></div><div class="ulist"><ul><li><p>Traefik</p></li><li><p>Web Server</p></li><li><p>CI Server</p></li><li><p><strong>SCM: A Gitea Git Server</strong></p></li><li><p>Web CLI</p></li></ul></div></section><section id="goal_8" data-transition-speed="fast"><h2>Goal</h2><div class="paragraph"><p>We want access to the Git server hosted in Docker through Traefik in Kubernetes.</p></div></section><section id="challenge_12_3" data-transition-speed="fast"><h2>Challenge 1/2</h2><div class="ulist"><ul><li><p><strong>Problem:</strong></p><div class="ulist"><ul><li><p>Gitea only serves requests under <code>/</code></p></li><li><p>Traefik in Docker already removes the prefix <code>/gitserver</code></p></li></ul></div></li></ul></div>
 <pre class="highlight listingblock"><code data-noescape class="bash language-bash">http://labXX.ddu-workshops-Y.com/gitserver/index.html
   -&gt; Traefik Kubernetes
     -&gt; Traefik Docker
-      -&gt; http://&lt;Gitea private IP&gt;:3000/index.html</code></pre></section><section id="use_a_pathprefix_rule" data-transition-speed="fast"><h2>Use a PathPrefix rule</h2><div class="paragraph"><p><strong>Solution:</strong> Do not remove the prefix (Thanks Captain Obvious!) in the ingress rule in <code>lab2-gitea.yml</code>.</p></div>
+      -&gt; http://&lt;Gitea private IP&gt;:3000/index.html</code></pre></section><section id="use_a_pathprefix_rule" data-transition-speed="fast"><h2>Use a PathPrefix rule</h2><div class="paragraph"><p><strong>Solution:</strong> Do not remove the prefix (Thanks Captain Obvious!) in the ingress rule in <code>~/02-k8s-traefik/gitea.yml</code>.</p></div>
 <pre class="highlight listingblock"><code data-noescape class="yaml language-yaml">---
 apiVersion: extensions/v1beta1
 kind: Ingress
@@ -374,7 +378,7 @@ spec:
       - path: /gitserver
         backend:
           serviceName: gitea-server
-          servicePort: traefik-http</code></pre></section><section id="challenge_22_3" data-transition-speed="fast"><h2>Challenge 2/2</h2><div class="paragraph"><p><strong>Problem:</strong> How to tell to Traefik to route requests to the SCM which is not deployed in Kubernetes?</p></div></section><section id="headless_service_3" data-transition-speed="fast"><h2>Headless Service</h2><div class="paragraph"><p><strong>Solution:</strong> Use (once again again) a service linked to an external address in <code>lab2-gitea.yml</code>.</p></div>
+          servicePort: traefik-http</code></pre></section><section id="challenge_22_3" data-transition-speed="fast"><h2>Challenge 2/2</h2><div class="paragraph"><p><strong>Problem:</strong> How to tell to Traefik to route requests to the SCM which is not deployed in Kubernetes?</p></div></section><section id="headless_service_3" data-transition-speed="fast"><h2>Headless Service</h2><div class="paragraph"><p><strong>Solution:</strong> Use (once again again) a service linked to an external address in <code>~/02-k8s-traefik/gitea.yml</code>.</p></div>
 <pre class="highlight listingblock"><code data-noescape class="yaml language-yaml">---
 apiVersion: v1
 kind: Service
@@ -388,13 +392,13 @@ spec:
   - port: 80
     name: traefik-http
   type: ExternalName
-  externalName: 10.0.x.y</code></pre></section><section id="apply_the_configuration_3" data-transition-speed="fast"><h2>Apply the configuration</h2><pre class="highlight listingblock"><code data-noescape class="bash language-bash">kubectl apply -f ./lab2-gitea.yml</code></pre></section><section id="reality_check_11" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Reality Check</h2><div class="paragraph"><p><a href="https://labXX.ddu-workshops-Y.com/gitserver" target="_blank">https://labXX.ddu-workshops-Y.com/gitserver</a></p></div>
+  externalName: 10.0.x.y</code></pre></section><section id="apply_the_configuration_3" data-transition-speed="fast"><h2>Apply the configuration</h2><pre class="highlight listingblock"><code data-noescape class="bash language-bash">kubectl apply -f ~/02-k8s-traefik/gitea.yml</code></pre></section><section id="reality_check_11" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Reality Check</h2><div class="paragraph"><p><a href="https://labXX.ddu-workshops-Y.com/gitserver" target="_blank">https://labXX.ddu-workshops-Y.com/gitserver</a></p></div>
 <div class="imageblock" style=""><img src="images/after-gitea-up.png" alt="after gitea up" width="500"></div>
 <div class="paragraph"><p>It&#8217;s good: Gitea is still available!</p></div></section></section>
 <section><section id="lab_2_5" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Lab 2</h2><div class="imageblock" style="float: left"><img src="images/gandalf-gopher.png" alt="Gandalf Gopher" height="400"></div><div class="ulist"><ul><li><p>Traefik</p></li><li><p>Web Server</p></li><li><p>CI Server</p></li><li><p>SCM: A Gitea Git Server</p></li><li><p><strong>Web CLI</strong></p></li></ul></div></section><section id="goal_9" data-transition-speed="fast"><h2>Goal</h2><div class="paragraph"><p>We want to access to <a href="https://github.com/tsl0922/ttyd" target="_blank">TTYD</a> deployed in Docker through Traefik in Kubernetes.</p></div></section><section id="challenges" data-transition-speed="fast"><h2>Challenges</h2><div class="ulist"><ul><li><p><strong>Problem 1:</strong> How to tell to Traefik to route requests to TTYD which is not deployed in Kubernetes?</p><pre class="highlight listingblock"><code data-noescape class="bash language-bash">https://labXX.ddu-workshops-Y.com/ttyd
   -&gt; Traefik Kubernetes
     -&gt; Traefik Docker
-      -&gt; https://&lt;WebCLI Private IP&gt;/</code></pre></li><li><p><strong>Problem 2:</strong> How to detect the HTTPS requests to catch ?</p></li></ul></div></section><section id="solution_1" data-transition-speed="fast"><h2>Solution 1</h2><div class="ulist"><ul><li><p>Use a Headless Service in <code>lab2-ttyd.yml</code>:</p></li></ul></div>
+      -&gt; https://&lt;WebCLI Private IP&gt;/</code></pre></li><li><p><strong>Problem 2:</strong> How to detect the HTTPS requests to catch ?</p></li></ul></div></section><section id="solution_1" data-transition-speed="fast"><h2>Solution 1</h2><div class="ulist"><ul><li><p>Use a Headless Service in <code>~/02-k8s-traefik/ttyd.yml</code>:</p></li></ul></div>
 <pre class="highlight listingblock"><code data-noescape class="yaml language-yaml">---
 apiVersion: v1
 kind: Service
@@ -408,7 +412,7 @@ spec:
   - port: 80
     name: traefik-http
   type: ExternalName
-  externalName: 10.0.x.y</code></pre></section><section id="solution_2" data-transition-speed="fast"><h2>Solution 2</h2><div class="ulist"><ul><li><p>Ingress Rule with <code>PathPrefix:/ttyd</code> in <code>lab2-ttyd.yml</code>:</p></li></ul></div>
+  externalName: 10.0.x.y</code></pre></section><section id="solution_2" data-transition-speed="fast"><h2>Solution 2</h2><div class="ulist"><ul><li><p>Ingress Rule with <code>PathPrefix:/ttyd</code> in <code>~/02-k8s-traefik/ttyd.yml</code>:</p></li></ul></div>
 <pre class="highlight listingblock"><code data-noescape class="yaml language-yaml">---
 apiVersion: extensions/v1beta1
 kind: Ingress
@@ -427,11 +431,11 @@ spec:
       - path: /ttyd
         backend:
           serviceName: ttyd-service
-          servicePort: traefik-http</code></pre></section><section id="apply_the_configuration_4" data-transition-speed="fast"><h2>Apply the configuration</h2><pre class="highlight listingblock"><code data-noescape class="bash language-bash">kubectl apply -f ./lab2-ttyd.yml</code></pre></section><section id="reality_check_12" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Reality Check</h2><div class="paragraph"><p><a href="https://labXX.ddu-workshops-Y.com/ttyd" target="_blank">https://labXX.ddu-workshops-Y.com/ttyd</a></p></div>
+          servicePort: traefik-http</code></pre></section><section id="apply_the_configuration_4" data-transition-speed="fast"><h2>Apply the configuration</h2><pre class="highlight listingblock"><code data-noescape class="bash language-bash">kubectl apply -f ~/02-k8s-traefik/ttyd.yml</code></pre></section><section id="reality_check_12" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Reality Check</h2><div class="paragraph"><p><a href="https://labXX.ddu-workshops-Y.com/ttyd" target="_blank">https://labXX.ddu-workshops-Y.com/ttyd</a></p></div>
 <div class="imageblock" style=""><img src="images/after-ttyd-up.png" alt="after ttyd up" width="500"></div>
 <div class="paragraph"><p>It&#8217;s good: we can continue to develop in a web browser!</p></div></section></section>
 <section><section id="the_castle" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>The Castle</h2><div class="imageblock" style=""><img src="images/carcassonne.jpg" alt="carcassonne"></div></section><section id="the_castle_2" data-transition-speed="fast"><h2>The Castle</h2><div class="paragraph"><p>We want to terminate the migration of our services to the Kubernetes cluster.</p></div></section><section id="infrastructure_setup_3" data-transition-speed="fast"><h2>Infrastructure Setup</h2><div class="ulist"><ul><li><p>Same VM as the Lab 2 (<code>ssh 10.0.n.p</code> from the webshell)</p></li><li><p><code>kubectl</code> and <code>helm</code> installed on the client machines</p></li><li><p>Create a directory named <code>~/03-k8s-apps</code> as working directory</p></li></ul></div></section></section>
-<section><section id="lab_3" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Lab 3</h2><div class="imageblock" style="float: left"><img src="images/gandalf-gopher.png" alt="Gandalf Gopher" height="400"></div><div class="ulist"><ul><li><p><strong>CI Server</strong></p></li><li><p>SCM: A Gitea Git Server</p></li><li><p>Web CLI</p></li><li><p>Web Server</p></li></ul></div></section><section id="goal_10" data-transition-speed="fast"><h2>Goal</h2><div class="paragraph"><p>We want to host the CI in Kubernetes and access it through Traefik</p></div></section><section id="challenge_13_2" data-transition-speed="fast"><h2>Challenge 1/3</h2><div class="paragraph"><p><strong>Problem:</strong> How to host the CI in Kubernetes?</p></div></section><section id="deployment_object" data-transition-speed="fast"><h2>Deployment Object</h2><div class="paragraph"><p><strong>Solution:</strong> Deploy it as a <code>Deployment</code> object.</p></div>
+<section><section id="lab_3" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Lab 3</h2><div class="imageblock" style="float: left"><img src="images/gandalf-gopher.png" alt="Gandalf Gopher" height="400"></div><div class="ulist"><ul><li><p><strong>CI Server</strong></p></li><li><p>SCM: A Gitea Git Server</p></li><li><p>Web CLI</p></li><li><p>Web Server</p></li></ul></div></section><section id="goal_10" data-transition-speed="fast"><h2>Goal</h2><div class="paragraph"><p>We want to host the CI in Kubernetes and access it through Traefik</p></div></section><section id="challenge_13_2" data-transition-speed="fast"><h2>Challenge 1/3</h2><div class="paragraph"><p><strong>Problem:</strong> How to host the CI in Kubernetes?</p></div></section><section id="deployment_object" data-transition-speed="fast"><h2>Deployment Object</h2><div class="paragraph"><p><strong>Solution:</strong> Declare it as a <code>Deployment</code> object in <code>~/03-k8s-apps/ci.yml</code>.</p></div>
 <pre class="highlight listingblock"><code data-noescape class="yaml language-yaml">---
 kind: Deployment
 apiVersion: extensions/v1beta1
@@ -456,7 +460,8 @@ spec:
 <aside class="notes"><div class="ulist"><ul><li><p>Explain differences between pod/container</p></li><li><p>Explain differnces between deployment/statefulset/deamonset</p></li><li><p>Explain the labels semantic/interest</p></li></ul></div></aside></section><section id="challenge_22_4" data-transition-speed="fast"><h2>Challenge 2/2</h2><div class="paragraph"><p><strong>Problem:</strong> How to access to the CI?</p></div>
 <pre class="highlight listingblock"><code data-noescape class="bash language-bash">https://labXX.ddu-workshops-Y.com/jenkins
   -&gt; Traefik
-    -&gt; https://&lt;Jenkins Private IP&gt;/jenkins</code></pre></section><section id="service" data-transition-speed="fast"><h2>Service</h2><pre class="highlight listingblock"><code data-noescape class="yaml language-yaml">---
+    -&gt; https://&lt;Jenkins Private IP&gt;/jenkins</code></pre></section><section id="service" data-transition-speed="fast"><h2>Service</h2><div class="paragraph"><p><strong>Solution:</strong> Adding a service in <code>~/03-k8s-apps/ci.yml</code>.</p></div>
+<pre class="highlight listingblock"><code data-noescape class="yaml language-yaml">---
 apiVersion: v1
 kind: Service
 metadata:
@@ -474,7 +479,8 @@ spec:
   selector:
     guilde: ci
     faction: jenkins</code></pre>
-<aside class="notes"><div class="ulist"><ul><li><p>Explain the selector interest/use</p></li><li><p>Make parallel The Voice?</p></li></ul></div></aside></section><section id="ingress_rule_3" data-transition-speed="fast"><h2>Ingress Rule</h2><pre class="highlight listingblock"><code data-noescape class="yaml language-yaml">---
+<aside class="notes"><div class="ulist"><ul><li><p>Explain the selector interest/use</p></li><li><p>Make parallel The Voice?</p></li></ul></div></aside></section><section id="ingress_rule_3" data-transition-speed="fast"><h2>Ingress Rule</h2><div class="paragraph"><p><strong>Solution:</strong> Adding an Ingress Rule in <code>~/03-k8s-apps/ci.yml</code>.</p></div>
+<pre class="highlight listingblock"><code data-noescape class="yaml language-yaml">---
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
@@ -494,15 +500,16 @@ spec:
         backend:
           serviceName: jenkins-full-service
           servicePort: jenkins-http</code></pre></section><section id="apply_the_configuration_5" data-transition-speed="fast"><h2>Apply the configuration</h2><pre class="highlight listingblock"><code data-noescape class="bash language-bash"># Add the new objects
-kubectl apply -f ./03-k8s-apps/jenkins/deployment-svc-ingress.yml
+kubectl apply -f ~/03-k8s-apps/ci.yml
 # Delete the headless service and its ingress rule (blue-green)
-kubectl delete -f ./02-k8s-traefik/jenkins/svc-ingress.yml</code></pre></section><section id="reality_check_13" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Reality Check</h2><div class="paragraph"><p><a href="https://labXX.ddu-workshops-Y.com/jenkins" target="_blank">https://labXX.ddu-workshops-Y.com/jenkins</a></p></div>
+kubectl delete -f ~/02-k8s-traefik/ci.yml</code></pre></section><section id="reality_check_13" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Reality Check</h2><div class="paragraph"><p><a href="https://labXX.ddu-workshops-Y.com/jenkins" target="_blank">https://labXX.ddu-workshops-Y.com/jenkins</a></p></div>
 <div class="imageblock" style=""><img src="images/after-jenkins-up.png" alt="after jenkins up" width="500"></div>
 <div class="paragraph"><p>It&#8217;s good: we can setup Jenkins in Kubernetes!</p></div></section></section>
 <section><section id="lab_3_2" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Lab 3</h2><div class="imageblock" style="float: left"><img src="images/gandalf-gopher.png" alt="Gandalf Gopher" height="400"></div><div class="ulist"><ul><li><p>CI Server</p></li><li><p><strong>SCM: A Gitea Git Server</strong></p></li><li><p>Web CLI</p></li><li><p>Web Server</p></li></ul></div></section><section id="goal_11" data-transition-speed="fast"><h2>Goal</h2><div class="paragraph"><p>We want to host the Git server in Kubernetes and access it through Traefik.</p></div></section><section id="challenges_2" data-transition-speed="fast"><h2>Challenges</h2><div class="ulist"><ul><li><p><strong>Problem 1:</strong></p><div class="ulist"><ul><li><p>How to host the Git server in Kubernetes?</p></li></ul></div></li><li><p><strong>Problem 2:</strong></p><div class="ulist"><ul><li><p>Gitea only serves requests under <code>/</code></p></li><li><p>Traefik in Docker already removes the prefix <code>/gitserver</code></p></li></ul></div></li></ul></div>
 <pre class="highlight listingblock"><code data-noescape class="bash language-bash">http://labXX.ddu-workshops-Y.com/gitserver/index.html
   -&gt; Traefik
-      -&gt; http://&lt;Gitea private IP&gt;:3000/index.html</code></pre></section><section id="deployment_object_2" data-transition-speed="fast"><h2>Deployment Object</h2><pre class="highlight listingblock"><code data-noescape class="yaml language-yaml">---
+      -&gt; http://&lt;Gitea private IP&gt;:3000/index.html</code></pre></section><section id="deployment_object_2" data-transition-speed="fast"><h2>Deployment Object</h2><div class="paragraph"><p><strong>Solution:</strong> Declare it as a <code>Deployment</code> object in <code>~/03-k8s-apps/gitea.yml</code>.</p></div>
+<pre class="highlight listingblock"><code data-noescape class="yaml language-yaml">---
 kind: Deployment
 apiVersion: extensions/v1beta1
 metadata:
@@ -522,7 +529,8 @@ spec:
           imagePullPolicy: IfNotPresent
           env:
           - name: ROOT_URL
-            value: "/gitserver"</code></pre></section><section id="service_2" data-transition-speed="fast"><h2>Service</h2><pre class="highlight listingblock"><code data-noescape class="yaml language-yaml">---
+            value: "/gitserver"</code></pre></section><section id="service_2" data-transition-speed="fast"><h2>Service</h2><div class="paragraph"><p><strong>Solution:</strong> Adding a service in <code>~/03-k8s-apps/gitea.yml</code>.</p></div>
+<pre class="highlight listingblock"><code data-noescape class="yaml language-yaml">---
 apiVersion: v1
 kind: Service
 metadata:
@@ -539,7 +547,8 @@ spec:
       name: gitea-ssh
   selector:
     guilde: git
-    faction: server</code></pre></section><section id="ingress_rule_4" data-transition-speed="fast"><h2>Ingress Rule</h2><pre class="highlight listingblock"><code data-noescape class="yaml language-yaml">---
+    faction: server</code></pre></section><section id="ingress_rule_4" data-transition-speed="fast"><h2>Ingress Rule</h2><div class="paragraph"><p><strong>Solution:</strong> Adding an Ingress Rule in <code>~/03-k8s-apps/gitea.yml</code>.</p></div>
+<pre class="highlight listingblock"><code data-noescape class="yaml language-yaml">---
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
@@ -559,14 +568,15 @@ spec:
         backend:
           serviceName: gitea-full-server
           servicePort: gitea-http</code></pre></section><section id="apply_the_configuration_6" data-transition-speed="fast"><h2>Apply the configuration</h2><pre class="highlight listingblock"><code data-noescape class="bash language-bash"># Add the new objects
-kubectl apply -f ./03-k8s-apps/gitea/deployment-svc-ingress.yml
+kubectl apply -f ~/03-k8s-apps/gitea.yml
 # Delete the headless service and its ingress rule (blue-green)
-kubectl delete -f ./02-k8s-traefik/gitea/svc-ingress.yml</code></pre></section><section id="reality_check_14" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Reality Check</h2><div class="paragraph"><p><a href="https://labXX.ddu-workshops-Y.com/gitserver" target="_blank">https://labXX.ddu-workshops-Y.com/gitserver</a></p></div>
+kubectl delete -f ~/02-k8s-traefik/gitea.yml</code></pre></section><section id="reality_check_14" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Reality Check</h2><div class="paragraph"><p><a href="https://labXX.ddu-workshops-Y.com/gitserver" target="_blank">https://labXX.ddu-workshops-Y.com/gitserver</a></p></div>
 <div class="imageblock" style=""><img src="images/after-gitea-up.png" alt="after gitea up" width="500"></div>
 <div class="paragraph"><p>It&#8217;s good: we can setup Gitea in Kubernetes!</p></div></section></section>
 <section><section id="lab_3_3" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Lab 3</h2><div class="imageblock" style="float: left"><img src="images/gandalf-gopher.png" alt="Gandalf Gopher" height="400"></div><div class="ulist"><ul><li><p>CI Server</p></li><li><p>SCM: A Gitea Git Server</p></li><li><p><strong>Web CLI</strong></p></li><li><p>Web Server</p></li></ul></div></section><section id="goal_12" data-transition-speed="fast"><h2>Goal</h2><div class="paragraph"><p>We want to host <a href="https://github.com/tsl0922/ttyd" target="_blank">TTYD</a> in Kubernetes and access it through Traefik.</p></div></section><section id="challenges_3" data-transition-speed="fast"><h2>Challenges</h2><div class="ulist"><ul><li><p><strong>Problem 1:</strong> How to host the <a href="https://github.com/tsl0922/ttyd" target="_blank">TTYD</a> in Kubernetes?</p></li><li><p><strong>Problem 2:</strong> How to access to <a href="https://github.com/tsl0922/ttyd" target="_blank">TTYD</a>?</p><pre class="highlight listingblock"><code data-noescape class="bash language-bash">http://labXX.ddu-workshops-Y.com/ttyd/
   -&gt; Traefik
-      -&gt; http://&lt;WebCLI private IP&gt;/</code></pre></li></ul></div></section><section id="deployment_object_3" data-transition-speed="fast"><h2>Deployment Object</h2><pre class="highlight listingblock"><code data-noescape class="yaml language-yaml">---
+      -&gt; http://&lt;WebCLI private IP&gt;/</code></pre></li></ul></div></section><section id="deployment_object_3" data-transition-speed="fast"><h2>Deployment Object</h2><div class="paragraph"><p><strong>Solution:</strong> Declare it as a <code>Deployment</code> object in <code>~/03-k8s-apps/ttyd.yml</code>.</p></div>
+<pre class="highlight listingblock"><code data-noescape class="yaml language-yaml">---
 kind: Deployment
 apiVersion: extensions/v1beta1
 metadata:
@@ -583,7 +593,8 @@ spec:
       containers:
         - name: ttyd-full-container
           image: tsl0922/ttyd:latest
-          imagePullPolicy: IfNotPresent</code></pre></section><section id="service_3" data-transition-speed="fast"><h2>Service</h2><pre class="highlight listingblock"><code data-noescape class="yaml language-yaml">---
+          imagePullPolicy: IfNotPresent</code></pre></section><section id="service_3" data-transition-speed="fast"><h2>Service</h2><div class="paragraph"><p><strong>Solution:</strong> Adding a service in <code>~/03-k8s-apps/ttyd.yml</code>.</p></div>
+<pre class="highlight listingblock"><code data-noescape class="yaml language-yaml">---
 apiVersion: v1
 kind: Service
 metadata:
@@ -598,7 +609,8 @@ spec:
       name: ttyd-ws
   selector:
     guilde: console
-    faction: tty</code></pre></section><section id="ingress_rule_5" data-transition-speed="fast"><h2>Ingress Rule</h2><pre class="highlight listingblock"><code data-noescape class="yaml language-yaml">---
+    faction: tty</code></pre></section><section id="ingress_rule_5" data-transition-speed="fast"><h2>Ingress Rule</h2><div class="paragraph"><p><strong>Solution:</strong> Adding an Ingress Rule in <code>~/03-k8s-apps/ttyd.yml</code>.</p></div>
+<pre class="highlight listingblock"><code data-noescape class="yaml language-yaml">---
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
@@ -616,12 +628,13 @@ spec:
         backend:
           serviceName: ttyd-full-service
           servicePort: ttyd-ws</code></pre></section><section id="apply_the_configuration_7" data-transition-speed="fast"><h2>Apply the configuration</h2><pre class="highlight listingblock"><code data-noescape class="bash language-bash"># Add the new objects
-kubectl apply -f ./03-k8s-apps/ttyd/deployment-svc-ingress.yml
+kubectl apply -f ~/03-k8s-apps/ttyd.yml
 # Delete the headless service and its ingress rule (blue-green)
-kubectl delete -f ./02-k8s-traefik/ttyd/svc-ingress.yml</code></pre></section><section id="reality_check_15" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Reality Check</h2><div class="paragraph"><p><a href="https://labXX.ddu-workshops-Y.com/ttyd" target="_blank">https://labXX.ddu-workshops-Y.com/ttyd</a></p></div>
+kubectl delete -f ~/02-k8s-traefik/ttyd.yml</code></pre></section><section id="reality_check_15" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Reality Check</h2><div class="paragraph"><p><a href="https://labXX.ddu-workshops-Y.com/ttyd" target="_blank">https://labXX.ddu-workshops-Y.com/ttyd</a></p></div>
 <div class="imageblock" style=""><img src="images/after-ttyd-up.png" alt="after ttyd up" width="500"></div>
 <div class="paragraph"><p>It&#8217;s good: we have our own "Dev Box" in a web browser hosted in Kubernetes!</p></div></section></section>
-<section><section id="lab_3_4" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Lab 3</h2><div class="imageblock" style="float: left"><img src="images/gandalf-gopher.png" alt="Gandalf Gopher" height="400"></div><div class="ulist"><ul><li><p>CI Server</p></li><li><p>SCM: A Gitea Git Server</p></li><li><p>Web CLI</p></li><li><p><strong>Web Server</strong></p></li></ul></div></section><section id="goal_13" data-transition-speed="fast"><h2>Goal</h2><div class="ulist"><ul><li><p>We want to deploy a new version of the webserver:</p><div class="ulist"><ul><li><p>hosted in Kubernetes and accessed through Traefik</p></li><li><p>continue to access to the old version for the main part of the traffic</p></li></ul></div></li></ul></div></section><section id="challenge_13_3" data-transition-speed="fast"><h2>Challenge 1/3</h2><div class="paragraph"><p><strong>Problem:</strong> How to host the new version of the webserver in Kubernetes?</p></div></section><section id="deployment_object_4" data-transition-speed="fast"><h2>Deployment Object</h2><pre class="highlight listingblock"><code data-noescape class="yaml language-yaml">---
+<section><section id="lab_3_4" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Lab 3</h2><div class="imageblock" style="float: left"><img src="images/gandalf-gopher.png" alt="Gandalf Gopher" height="400"></div><div class="ulist"><ul><li><p>CI Server</p></li><li><p>SCM: A Gitea Git Server</p></li><li><p>Web CLI</p></li><li><p><strong>Web Server</strong></p></li></ul></div></section><section id="goal_13" data-transition-speed="fast"><h2>Goal</h2><div class="ulist"><ul><li><p>We want to deploy a new version of the webserver:</p><div class="ulist"><ul><li><p>hosted in Kubernetes and accessed through Traefik</p></li><li><p>continue to access to the old version for the main part of the traffic</p></li></ul></div></li></ul></div></section><section id="challenge_13_3" data-transition-speed="fast"><h2>Challenge 1/3</h2><div class="paragraph"><p><strong>Problem:</strong> How to host the new version of the webserver in Kubernetes?</p></div></section><section id="deployment_object_4" data-transition-speed="fast"><h2>Deployment Object</h2><div class="paragraph"><p><strong>Solution:</strong> Declare it as a <code>Deployment</code> object in <code>~/03-k8s-apps/web.yml</code>.</p></div>
+<pre class="highlight listingblock"><code data-noescape class="yaml language-yaml">---
 kind: Deployment
 apiVersion: extensions/v1beta1
 metadata:
@@ -649,7 +662,8 @@ spec:
 <pre class="highlight listingblock"><code data-noescape class="yaml language-yaml">traefik.ingress.kubernetes.io/service-weights: |
   web-service: 80%
   web-full-service: 20%</code></pre>
-<aside class="notes"><div class="ulist"><ul><li><p>explain the principle of canary release</p></li></ul></div></aside></section><section id="service_4" data-transition-speed="fast"><h2>Service</h2><pre class="highlight listingblock"><code data-noescape class="yaml language-yaml">---
+<aside class="notes"><div class="ulist"><ul><li><p>explain the principle of canary release</p></li></ul></div></aside></section><section id="service_4" data-transition-speed="fast"><h2>Service</h2><div class="paragraph"><p><strong>Solution:</strong> Adding a service in <code>~/03-k8s-apps/web.yml</code>.</p></div>
+<pre class="highlight listingblock"><code data-noescape class="yaml language-yaml">---
 apiVersion: v1
 kind: Service
 metadata:
@@ -663,9 +677,9 @@ spec:
     - port: 80
       name: web-http
   selector:
-    labels:
-      guilde: web
-      faction: server</code></pre></section><section id="ingress_rule_6" data-transition-speed="fast"><h2>Ingress Rule</h2><pre class="highlight listingblock"><code data-noescape class="yaml language-yaml">---
+    guilde: web
+    faction: server</code></pre></section><section id="ingress_rule_6" data-transition-speed="fast"><h2>Ingress Rule</h2><div class="paragraph"><p><strong>Solution:</strong> Adding an Ingress Rule in <code>~/03-k8s-apps/web.yml</code>.</p></div>
+<pre class="highlight listingblock"><code data-noescape class="yaml language-yaml">---
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
@@ -688,12 +702,14 @@ spec:
       - path: /
         backend:
           serviceName: web-full-service
+          servicePort: web-http
       - path: /
         backend:
-          serviceName: web-service</code></pre></section><section id="apply_the_configuration_8" data-transition-speed="fast"><h2>Apply the configuration</h2><pre class="highlight listingblock"><code data-noescape class="bash language-bash"># Add the new objects
-kubectl apply -f ./03-k8s-apps/jenkins/deployment-svc-ingress.yml
+          serviceName: web-service
+          servicePort: web-http</code></pre></section><section id="apply_the_configuration_8" data-transition-speed="fast"><h2>Apply the configuration</h2><pre class="highlight listingblock"><code data-noescape class="bash language-bash"># Add the new objects
+kubectl apply -f ~/03-k8s-apps/web.yml
 # Delete only the old ingress rule: the service will be reachable from the new one
-kubectl --namespace delete ingress web-ingress</code></pre></section><section id="reality_check_16" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Reality Check</h2><div class="paragraph"><p><a href="https://labXX.ddu-workshops-Y.com/" target="_blank">https://labXX.ddu-workshops-Y.com/</a></p></div>
+kubectl --namespace devoxx delete ingress web-ingress</code></pre></section><section id="reality_check_16" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Reality Check</h2><div class="paragraph"><p><a href="https://labXX.ddu-workshops-Y.com/" target="_blank">https://labXX.ddu-workshops-Y.com/</a></p></div>
 <div class="imageblock shadow" style="float: left"><img src="images/lab1-after-webserver-up.png" alt="lab1 after webserver up" width="525"></div>
 <div class="imageblock" style="float: center"><img src="images/lab3-after-webserver-up.png" alt="lab3 after webserver up" width="500"></div>
 <div class="paragraph"><p>It&#8217;s good: when reloading, the 2 versions of the web page are shown!</p></div></section><section id="switch_all_traffic_to_the_new_version" data-transition-speed="fast"><h2>Switch all traffic to the new version</h2><pre class="highlight listingblock"><code data-noescape class="bash language-bash"># Edit the ingress
@@ -709,6 +725,7 @@ kubectl --namespace devoxx edit ingress web-full-ingress
       - path: /
         backend:
           serviceName: web-service
+          servicePort: web-http
 # Exit and save
 ###</code></pre></section><section id="reality_check_17" data-transition-speed="fast" data-background-color="white" data-state="invert"><h2>Reality Check</h2><div class="paragraph"><p><a href="https://labXX.ddu-workshops-Y.com/" target="_blank">https://labXX.ddu-workshops-Y.com/</a></p></div>
 <div class="imageblock shadow" style=""><img src="images/lab3-after-webserver-up.png" alt="lab3 after webserver up" width="500"></div>
