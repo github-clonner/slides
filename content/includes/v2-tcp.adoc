@@ -1,47 +1,32 @@
 
-[%notitle,{invert}]
-= TCP Support
+[{invert}]
 
-image::traefik-v2-tcp.png[]
+= Demo
+image::demo.jpg[]
 
 [{invert}]
-== Demo 1 - Straightforward TCP Routing
+== Demo 1 - TCP
 
 image::demo1-v2-tcp.png[width=500]
 
 [.small]
-link:https://github.com/containous/slides/tree/meetup-sfeir-lille-2019/demo/traefik-v2/01-mongo[Demo Code on icon:github[]]
+link:{repositoryUrl}/demo/traefik-v2/mongo/01-mongo[Demo Code on +++<i class="fab fa-github"></i>+++]
 
 [{invert}]
-== Demo 1 - Configuration
-
-image::demo1-v2-config.png[]
-
-[{invert}]
-== Demo 2 - Let’s Add TLS to TCP with Traefik
+== Demo 2 - TCP + TLS
 
 image::demo2-v2-tcp-tls.png[width=500]
 
 [.small]
-link:https://github.com/containous/slides/tree/meetup-sfeir-lille-2019/demo/traefik-v2/02-tls-mongo[Demo Code on icon:github[]]
+link:{repositoryUrl}/demo/traefik-v2/mongo/03-sni-routing-mongo[Demo Code on +++<i class="fab fa-github"></i>+++]
 
 [{invert}]
-== Demo 2 - Configuration
-
-image::demo2-v2-config.png[]
-
-[{invert}]
-== Demo 3 - SNI Routing + TLS Passthrough
+== Demo 3 - SNI Routing + TLS Passthrough for TCP
 
 image::demo3-v2-tcp-sni.png[width=500]
 
 [.small]
-link:https://github.com/containous/slides/tree/meetup-sfeir-lille-2019/demo/traefik-v2/03-sni-routing-mongo[Demo Code on icon:github[]]
-
-[{invert}]
-== Demo 3 - Configuration
-
-image::demo3-v2-config.png[]
+link:{repositoryUrl}/demo/traefik-v2/mongo/03-sni-routing-mongo[Demo Code on +++<i class="fab fa-github"></i>+++]
 
 [{invert}]
 == Demo 4 - Muxing HTTPS and TCP on the Same Port
@@ -49,4 +34,11 @@ image::demo3-v2-config.png[]
 image::demo4-v2-tcp-http.png[width=500]
 
 [.small]
-link:https://github.com/containous/slides/tree/meetup-sfeir-lille-2019/demo/traefik-v2/04-tcp-and-http-routing-mongo[Demo Code on icon:github[]]
+link:{repositoryUrl}/demo/traefik-v2/mongo/04-tcp-and-http-routing-mongo[Demo Code on +++<i class="fab fa-github"></i>+++]
+
+== Demo 5 - Canary Release of a WebApp
+
+image::canary.png[width=500]
+
+[.small]
+link:{repositoryUrl}/demo/traefik-v2/canary[Demo Code on +++<i class="fab fa-github"></i>+++]

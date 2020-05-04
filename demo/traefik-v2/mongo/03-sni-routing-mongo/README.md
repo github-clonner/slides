@@ -3,7 +3,7 @@
 * (Optional): Re-generate Certificates:
 
 ```shell
-bash ../root-certs/generate-certificates.sh "mongo1.local,mongo2.local" ./
+bash ../certs/generate-certificates.sh "mongo1.local,mongo2.local" ./
 ```
 
 * Start the stack:
@@ -27,6 +27,7 @@ mongo --host mongo1.local --port 27017 --ssl --sslCAFile=../certs/minica.pem --s
 > show dbs
 > use meetup
 > db.movie.insert({"name":"Traefik-Awesome"})
+> db.movie.find()
 > show dbs
 > exit
 ```

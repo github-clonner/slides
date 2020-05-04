@@ -1,23 +1,28 @@
 
-= Why Traefik?
+= Why Traefik
 
 image::why-mr-anderson.jpg["Why, Mr Anderson?",width=800]
 
 Why, Mr Anderson?
 
 [{invert}]
+[%notitle]
 == Evolution of Software Design
-
-image::evolution-of-software-design.jpg[Evolution of Software Design]
+//image::evolution-of-software-design.jpg[Evolution of Software Design]
+image::pasta-architecture.png["Evolution of Software Design", height = 800]
 
 == The Premise of Microservices...
 
-image::asterix-premise.jpg[Asterix - Premise]
+image::asterix-premise.jpg["Asterix - Premise", height = 550]
 
 [{invert}]
 == ...and What Happens
 
 image::asterix-fight.jpg[Asterix - Fighting]
+
+== Where's My Service?
+
+image::where-is-charlie.jpg["Where os Charlie?",width=900]
 
 [{invert}]
 == Tools of the Trade
@@ -38,16 +43,13 @@ image::netflix_oss.png[width=80,float=right]
 image::etcd.png[width=80,float=right]
 image::zookeeper.png[width=80,float=right]
 
-== Where's My Service?
-
-image::where-is-charlie.jpg["Where os Charlie?",width=900]
-
 == !
 
 image::yaml.jpg[width=900]
 
 [.small][.small]
 Source: https://twitter.com/Caged/status/1039937162769096704[]
+
 
 == What If I Told You?
 

@@ -1,6 +1,10 @@
 FROM node:11-alpine
 
-LABEL Maintainers="Damien DUPORTAL<damien.duportal@gmail.com>"
+RUN npm config set unsafe-perm true
+
+LABEL Maintainers="Damien DUPORTAL<damien@containo.us>"
+
+ RUN npm config set unsafe-perm true
 
 # Install Global dependencies and gulp 4.x globally
 RUN apk add --no-cache \

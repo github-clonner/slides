@@ -1,9 +1,6 @@
-= Smart Routing et HTTPS pour tous : Traefik en action (🇫🇷)
+= Containous Slides
 
-Traefik est le très populaire edge router open source qui permet de faire du reverse-proxy dynamique.
-Les concepts clés de cet outil sont la simplicité et l'automatisation permettant un gain de temps considérable lors du développement, déploiement et la gestion de vos applications. Traefik supprime le besoin de mise à jour de configuration de routage de votre environnement containerisé, et s'intégre dans un très large écosystème de backends modernes (Docker, Mesos, Marathon, Kubernetes, Etcd, Consul, Zookeeper, ect.)
-
-== How-to Work with this Presentation?
+== How-to Work with this?
 
 === Requirements
 
@@ -19,7 +16,7 @@ Docker4Mac, Docker4Windows or a local Linux Docker install)
 * If you want to generate the slide-deck in "one shot":
 ** Clone the repository
 ** Run the following `make` command:
-+
+
 [source,bash]
 ----
 make build
@@ -36,7 +33,7 @@ to get a WYSIWYG experience:
 
 ** Clone the repository
 ** Run the following `make` command:
-+
+
 [source,bash]
 ----
 make serve
@@ -53,14 +50,14 @@ of the generated slide deck.
 
 If you already generated the file `./dist/index.html`,
 then run the following `make` command:
-+
+
 [source,bash]
 ----
 make verify
 ----
 
 Otherwise, you can run the `all` command ,as the CI process is doing:
-+
+
 [source,bash]
 ----
 make all
@@ -70,7 +67,7 @@ make all
 
 If you want to get a shell inside the "build and serve" container,
 run the following `make` command:
-+
+
 [source,bash]
 ----
 make shell

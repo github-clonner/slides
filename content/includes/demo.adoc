@@ -1,0 +1,19 @@
+= Demo
+
+image::demo.jpg[]
+
+== Demo Menu
+
+1. Deploying Traefik and configure a service
+2. Configure a dashboard
+3. Configure the load balancing for scaled service
+4. Configure a service on a specific path
+5. Configure Let's encrypt in Traefik
+6. Generate certificates for our services
+
+== Deploying Traefik and configure a service
+== Configure a dashboard
+== Configure the load balancing for scaled service
+== Configure a service on a specific path
+== Configure Let's encrypt in Traefik
+== Generate certificates for our services
